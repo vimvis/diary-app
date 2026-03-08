@@ -1,14 +1,802 @@
-<!doctype html>
-<html lang="ko">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>오늘의 기억</title>
-    <script type="module" crossorigin src="./assets/index-4fTAMBe9.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-ZxEXzWNw.css">
-  </head>
-  <body>
-    <div id="root"></div>
-  </body>
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>오늘의 기억</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    /* ── CSS Variables ── */
+    :root {
+      --bg:           #F7F6F2;
+      --bg2:          #EFEDE8;
+      --surface:      #FFFFFF;
+      --surface2:     #F2F0EB;
+      --border:       rgba(0,0,0,0.08);
+      --text:         #1C1C1E;
+      --text2:        #6B6B6B;
+      --text3:        #B0B0B0;
+      --primary:      #6366F1;
+      --primary-soft: rgba(99,102,241,0.12);
+      --primary-glow: rgba(99,102,241,0.28);
+      --accent:       #A78BFA;
+      --danger:       #EF4444;
+      --danger-soft:  rgba(239,68,68,0.1);
+      --shadow:       0 4px 20px rgba(0,0,0,0.08);
+      --shadow-lg:    0 12px 40px rgba(0,0,0,0.12);
+      --radius:       16px;
+      --radius-sm:    10px;
+      --nav-h:        68px;
+      --header-h:     60px;
+      --transition:   0.2s cubic-bezier(0.4,0,0.2,1);
+    }
+    [data-theme="dark"] {
+      --bg:           #111118;
+      --bg2:          #18181F;
+      --surface:      #1E1E28;
+      --surface2:     #252532;
+      --border:       rgba(255,255,255,0.07);
+      --text:         #F0F0F8;
+      --text2:        #9090A8;
+      --text3:        #555568;
+      --primary:      #818CF8;
+      --primary-soft: rgba(129,140,248,0.15);
+      --primary-glow: rgba(129,140,248,0.32);
+      --accent:       #C4B5FD;
+      --danger:       #F87171;
+      --danger-soft:  rgba(248,113,113,0.12);
+      --shadow:       0 4px 20px rgba(0,0,0,0.4);
+      --shadow-lg:    0 12px 40px rgba(0,0,0,0.55);
+    }
+
+    /* ── Reset ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Noto Sans KR', -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100dvh;
+      overflow-x: hidden;
+      transition: background var(--transition), color var(--transition);
+    }
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    /* ── App Shell ── */
+    #app { display: flex; flex-direction: column; min-height: 100dvh; }
+
+    /* ── Header ── */
+    header {
+      position: sticky; top: 0; z-index: 50;
+      height: var(--header-h);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 20px;
+      background: color-mix(in srgb, var(--bg) 82%, transparent);
+      backdrop-filter: blur(24px) saturate(1.6);
+      -webkit-backdrop-filter: blur(24px) saturate(1.6);
+      border-bottom: 1px solid var(--border);
+    }
+    .header-left { display: flex; align-items: center; gap: 11px; }
+    .logo {
+      width: 36px; height: 36px; border-radius: 11px; flex-shrink: 0;
+      background: linear-gradient(135deg, #818CF8 0%, #C4B5FD 100%);
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 3px 10px var(--primary-glow);
+    }
+    .logo svg { width: 18px; height: 18px; }
+    .header-title { font-size: 0.92rem; font-weight: 700; letter-spacing: -0.3px; }
+    .header-date  { font-size: 0.7rem;  color: var(--text2); margin-top: 2px; }
+    .icon-btn {
+      width: 36px; height: 36px; border-radius: 10px;
+      border: 1px solid var(--border); background: var(--surface);
+      color: var(--text2); display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: all var(--transition);
+    }
+    .icon-btn:hover { background: var(--surface2); color: var(--text); transform: scale(1.06); }
+    .icon-btn svg { width: 16px; height: 16px; }
+
+    /* ── Views wrapper ── */
+    #views { flex: 1; }
+
+    /* ── Main grid (home) ── */
+    #home-view {
+      display: grid;
+      grid-template-columns: 400px 1fr;
+      gap: 20px;
+      padding: 20px;
+      max-width: 1080px; margin: 0 auto; width: 100%;
+      padding-bottom: calc(var(--nav-h) + 20px);
+    }
+    #home-view.hidden { display: none; }
+
+    /* ── Calendar wrapper ── */
+    #cal-wrapper {
+      display: none;
+      padding: 20px;
+      max-width: 540px; margin: 0 auto; width: 100%;
+      padding-bottom: calc(var(--nav-h) + 20px);
+    }
+    #cal-wrapper.visible { display: block; }
+
+    /* ── Card ── */
+    .card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      padding: 20px;
+      transition: background var(--transition), box-shadow var(--transition);
+    }
+    .section-label {
+      font-size: 0.63rem; font-weight: 700; letter-spacing: 0.09em;
+      text-transform: uppercase; color: var(--text3);
+      display: flex; align-items: center; gap: 5px; margin-bottom: 10px;
+    }
+    .section-label svg { width: 11px; height: 11px; }
+
+    /* ── Date Input ── */
+    .date-block { margin-bottom: 18px; }
+    .date-input {
+      width: 100%; padding: 11px 14px;
+      background: var(--bg2); border: 1.5px solid transparent;
+      border-radius: var(--radius-sm); color: var(--text);
+      font-family: inherit; font-size: 0.88rem; font-weight: 500;
+      cursor: pointer; transition: all var(--transition);
+      -webkit-appearance: none;
+    }
+    .date-input::-webkit-calendar-picker-indicator {
+      opacity: 0.35; cursor: pointer;
+    }
+    [data-theme="dark"] .date-input::-webkit-calendar-picker-indicator {
+      filter: invert(1); opacity: 0.35;
+    }
+    .date-input:hover  { border-color: var(--primary-glow); }
+    .date-input:focus  {
+      outline: none; border-color: var(--primary);
+      background: var(--surface); box-shadow: 0 0 0 3px var(--primary-soft);
+    }
+
+    /* ── Memory Inputs ── */
+    .fields { display: flex; flex-direction: column; gap: 14px; margin-bottom: 18px; }
+    .field-label {
+      display: flex; align-items: center; gap: 7px;
+      font-size: 0.75rem; font-weight: 600; color: var(--text2); margin-bottom: 7px;
+    }
+    .field-num {
+      width: 19px; height: 19px; border-radius: 50%; flex-shrink: 0;
+      background: var(--primary-soft); color: var(--primary);
+      font-size: 0.63rem; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .mem-input {
+      width: 100%; padding: 11px 14px;
+      background: var(--bg2); border: 1.5px solid transparent;
+      border-radius: var(--radius-sm); color: var(--text);
+      font-family: inherit; font-size: 0.865rem; line-height: 1.65;
+      resize: none; min-height: 70px; transition: all var(--transition);
+    }
+    .mem-input::placeholder { color: var(--text3); }
+    .mem-input:hover  { border-color: var(--primary-glow); }
+    .mem-input:focus  {
+      outline: none; border-color: var(--primary);
+      background: var(--surface); box-shadow: 0 0 0 3px var(--primary-soft);
+    }
+
+    /* ── Save Button ── */
+    .save-btn {
+      width: 100%; padding: 13px;
+      background: linear-gradient(135deg, #6366F1 0%, #A78BFA 100%);
+      color: #fff; border: none; border-radius: var(--radius-sm);
+      font-family: inherit; font-size: 0.88rem; font-weight: 600;
+      cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 7px;
+      box-shadow: 0 4px 14px var(--primary-glow);
+      transition: all var(--transition); position: relative; overflow: hidden;
+    }
+    .save-btn::after {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.14) 0%, transparent);
+      opacity: 0; transition: opacity var(--transition);
+    }
+    .save-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 20px var(--primary-glow); }
+    .save-btn:hover:not(:disabled)::after { opacity: 1; }
+    .save-btn:active:not(:disabled) { transform: none; }
+    .save-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+    .save-btn svg { width: 15px; height: 15px; }
+
+    /* ── Right panel ── */
+    .right-panel { display: flex; flex-direction: column; gap: 14px; }
+
+    /* ── Entry Cards ── */
+    .entry-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      animation: fadeUp 0.35s ease both;
+      transition: box-shadow var(--transition);
+    }
+    .entry-card:hover { box-shadow: var(--shadow-lg); }
+    .entry-header {
+      padding: 13px 16px 11px;
+      display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+    }
+    .entry-meta { display: flex; align-items: center; gap: 9px; }
+    .badge {
+      padding: 3px 9px; border-radius: 100px;
+      font-size: 0.65rem; font-weight: 700; letter-spacing: 0.03em;
+    }
+    .badge-today { background: var(--primary); color: #fff; }
+    .badge-past  {
+      background: var(--surface2); color: var(--text2);
+      border: 1px solid var(--border);
+    }
+    .entry-date-str { font-size: 0.8rem; color: var(--text2); font-weight: 500; }
+    .del-btn {
+      width: 30px; height: 30px; border-radius: 8px;
+      border: none; background: transparent; color: var(--text3);
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      opacity: 0; transition: all var(--transition);
+    }
+    .entry-card:hover .del-btn { opacity: 1; }
+    .del-btn:hover { background: var(--danger-soft); color: var(--danger); }
+    .del-btn svg { width: 13px; height: 13px; }
+    .entry-body { padding: 14px 16px; display: flex; flex-direction: column; gap: 11px; }
+    .entry-row { display: flex; gap: 11px; align-items: flex-start; }
+    .entry-n {
+      width: 21px; height: 21px; border-radius: 50%; flex-shrink: 0;
+      background: var(--primary-soft); color: var(--primary);
+      font-size: 0.63rem; font-weight: 700; margin-top: 1px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .past-card .entry-n { background: var(--surface2); color: var(--text2); }
+    .entry-text { font-size: 0.858rem; line-height: 1.65; color: var(--text); flex: 1; }
+
+    /* ── Empty State ── */
+    .empty {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; gap: 10px; padding: 32px 20px; text-align: center;
+    }
+    .empty-ico {
+      width: 56px; height: 56px; border-radius: 18px;
+      background: var(--primary-soft);
+      display: flex; align-items: center; justify-content: center; margin-bottom: 2px;
+    }
+    .empty-ico svg { width: 26px; height: 26px; color: var(--primary); }
+    .empty-title { font-size: 0.9rem; font-weight: 600; color: var(--text2); }
+    .empty-desc  { font-size: 0.78rem; color: var(--text3); line-height: 1.6; }
+
+    /* ── Skeleton ── */
+    .sk {
+      background: linear-gradient(90deg, var(--surface2) 25%, var(--surface) 50%, var(--surface2) 75%);
+      background-size: 200%; animation: shimmer 1.4s infinite; border-radius: 6px;
+    }
+
+    /* ── Calendar ── */
+    .cal-card { padding: 20px; }
+    .cal-nav {
+      display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px;
+    }
+    .cal-month { font-size: 1rem; font-weight: 700; }
+    .cal-arrow {
+      width: 34px; height: 34px; border-radius: 9px;
+      border: 1px solid var(--border); background: var(--surface);
+      color: var(--text2); display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: all var(--transition);
+    }
+    .cal-arrow:hover { background: var(--surface2); color: var(--text); }
+    .cal-arrow svg { width: 15px; height: 15px; }
+    .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+    .cal-hdr {
+      text-align: center; font-size: 0.67rem; font-weight: 600;
+      color: var(--text3); padding: 6px 0; letter-spacing: 0.05em;
+    }
+    .cal-day {
+      aspect-ratio: 1; border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.8rem; cursor: pointer; position: relative;
+      color: var(--text2); transition: all var(--transition);
+    }
+    .cal-day:hover:not(.empty) { background: var(--surface2); color: var(--text); }
+    .cal-day.today  { background: var(--primary); color: #fff; font-weight: 700; }
+    .cal-day.today:hover { background: var(--accent); }
+    .cal-day.has-entry::after {
+      content: ''; position: absolute; bottom: 3px; left: 50%;
+      transform: translateX(-50%); width: 3.5px; height: 3.5px;
+      border-radius: 50%; background: var(--primary);
+    }
+    .cal-day.today.has-entry::after { background: rgba(255,255,255,0.75); }
+    .cal-day.dim { color: var(--text3); opacity: 0.38; }
+    .cal-day.empty { cursor: default; }
+
+    /* ── Bottom Nav ── */
+    nav {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      height: var(--nav-h); z-index: 50;
+      background: color-mix(in srgb, var(--surface) 88%, transparent);
+      backdrop-filter: blur(24px) saturate(1.6);
+      -webkit-backdrop-filter: blur(24px) saturate(1.6);
+      border-top: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      padding: 0 20px; padding-bottom: env(safe-area-inset-bottom);
+    }
+    .nav-btn {
+      flex: 1; max-width: 110px;
+      display: flex; flex-direction: column; align-items: center; gap: 3px;
+      padding: 9px 8px; border-radius: var(--radius-sm);
+      cursor: pointer; transition: all var(--transition);
+      border: none; background: transparent; color: var(--text3);
+      font-family: inherit;
+    }
+    .nav-btn.active { color: var(--primary); background: var(--primary-soft); }
+    .nav-btn:hover:not(.active) { color: var(--text2); background: var(--surface2); }
+    .nav-btn svg { width: 21px; height: 21px; stroke-width: 1.75; }
+    .nav-btn span { font-size: 0.66rem; font-weight: 600; letter-spacing: 0.02em; }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed; bottom: calc(var(--nav-h) + 14px); left: 50%;
+      transform: translateX(-50%) translateY(16px);
+      background: var(--text); color: var(--bg);
+      padding: 9px 18px; border-radius: 100px;
+      font-size: 0.8rem; font-weight: 500;
+      opacity: 0; pointer-events: none; white-space: nowrap;
+      transition: all 0.28s ease; z-index: 200;
+      box-shadow: var(--shadow-lg);
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* ── Spinner ── */
+    .spin {
+      width: 15px; height: 15px; border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff;
+      animation: rotate 0.65s linear infinite; display: inline-block;
+    }
+
+    /* ── Animations ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes shimmer {
+      0%   { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+    @keyframes rotate { to { transform: rotate(360deg); } }
+
+    /* ── Responsive ── */
+    @media (max-width: 720px) {
+      #home-view { grid-template-columns: 1fr; gap: 14px; padding: 14px; }
+      header { padding: 0 14px; }
+      nav { padding: 0 14px; padding-bottom: env(safe-area-inset-bottom); }
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ── Header ── -->
+  <header>
+    <div class="header-left">
+      <div class="logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/>
+          <polyline points="12 6 12 12 16 14"/>
+        </svg>
+      </div>
+      <div>
+        <div class="header-title">나의 기억이 나의 삶</div>
+        <div class="header-date" id="hdr-date"></div>
+      </div>
+    </div>
+    <button class="icon-btn" id="theme-btn" title="테마">
+      <!-- sun (shown in dark mode) -->
+      <svg id="ico-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <circle cx="12" cy="12" r="5"/>
+        <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+        <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+      </svg>
+      <!-- moon (shown in light mode) -->
+      <svg id="ico-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="display:none">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+      </svg>
+    </button>
+  </header>
+
+  <!-- ── Views ── -->
+  <div id="views">
+
+    <!-- Home View -->
+    <div id="home-view">
+
+      <!-- LEFT: Form -->
+      <div>
+        <div class="card">
+          <!-- Date -->
+          <div class="date-block">
+            <div class="section-label">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                <rect x="3" y="4" width="18" height="18" rx="2"/>
+                <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
+                <line x1="3" y1="10" x2="21" y2="10"/>
+              </svg>
+              날짜 선택
+            </div>
+            <input type="date" class="date-input" id="date-input" />
+          </div>
+
+          <!-- Memories -->
+          <div class="fields">
+            <div>
+              <div class="field-label"><span class="field-num">1</span> 첫 번째 기억</div>
+              <textarea class="mem-input" id="item1" placeholder="오늘 감사했던 일은?" rows="3"></textarea>
+            </div>
+            <div>
+              <div class="field-label"><span class="field-num">2</span> 두 번째 기억</div>
+              <textarea class="mem-input" id="item2" placeholder="오늘 배운 것은?" rows="3"></textarea>
+            </div>
+            <div>
+              <div class="field-label"><span class="field-num">3</span> 세 번째 기억</div>
+              <textarea class="mem-input" id="item3" placeholder="내일 하고 싶은 일은?" rows="3"></textarea>
+            </div>
+          </div>
+
+          <!-- Save -->
+          <button class="save-btn" id="save-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+              <polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
+            </svg>
+            <span id="save-label">일기 저장하기</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- RIGHT: Memories -->
+      <div class="right-panel">
+        <div id="sk-loader">
+          <div class="card" style="display:flex;flex-direction:column;gap:12px">
+            <div class="sk" style="height:18px;width:35%"></div>
+            <div class="sk" style="height:13px"></div>
+            <div class="sk" style="height:13px;width:80%"></div>
+            <div class="sk" style="height:13px;width:60%"></div>
+          </div>
+        </div>
+        <div id="mem-content"></div>
+      </div>
+
+    </div><!-- /home-view -->
+
+    <!-- Calendar View -->
+    <div id="cal-wrapper">
+      <div class="card cal-card">
+        <div class="cal-nav">
+          <button class="cal-arrow" id="cal-prev">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+          <span class="cal-month" id="cal-label"></span>
+          <button class="cal-arrow" id="cal-next">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        </div>
+        <div class="cal-grid" id="cal-grid"></div>
+      </div>
+    </div>
+
+  </div><!-- /views -->
+
+  <!-- ── Bottom Nav ── -->
+  <nav>
+    <button class="nav-btn active" id="nav-home" onclick="switchView('home')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+        <polyline points="9 22 9 12 15 12 15 22"/>
+      </svg>
+      <span>오늘</span>
+    </button>
+    <button class="nav-btn" id="nav-cal" onclick="switchView('cal')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="4" width="18" height="18" rx="2"/>
+        <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
+        <line x1="3" y1="10" x2="21" y2="10"/>
+      </svg>
+      <span>달력</span>
+    </button>
+  </nav>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+</div><!-- /app -->
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import {
+  getFirestore, doc, getDoc, setDoc, deleteDoc,
+  collection, query, orderBy, getDocs, where
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+/* ── Firebase ── */
+const db = getFirestore(initializeApp({
+  apiKey:            "AIzaSyBHxd2JnEl-EuMWZGSHfaSKJtZ5Lsg24Dg",
+  authDomain:        "daily-dairy-c6e5a.firebaseapp.com",
+  projectId:         "daily-dairy-c6e5a",
+  storageBucket:     "daily-dairy-c6e5a.firebasestorage.app",
+  messagingSenderId: "888823431115",
+  appId:             "1:888823431115:web:e1d429ca9b7aae0e56804e"
+}));
+const COL = "entries";
+
+/* ── Helpers ── */
+const toStr = d => {
+  const y = d.getFullYear(), m = String(d.getMonth()+1).padStart(2,'0'), day = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+};
+const shortKo = s => {
+  const [y,m,d] = s.split('-').map(Number);
+  return `${y}년 ${m}월 ${d}일`;
+};
+const escHtml = s => s ? s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>') : '';
+
+/* ── State ── */
+let curDate = toStr(new Date());
+let calY = new Date().getFullYear(), calM = new Date().getMonth();
+
+/* ── Header date ── */
+(() => {
+  const now = new Date();
+  const days = ['일','월','화','수','목','금','토'];
+  document.getElementById('hdr-date').textContent =
+    `${now.getMonth()+1}월 ${now.getDate()}일 ${days[now.getDay()]}요일`;
+})();
+
+/* ── Date input ── */
+const dateEl = document.getElementById('date-input');
+dateEl.value = curDate;
+dateEl.max = toStr(new Date());
+dateEl.addEventListener('change', () => { curDate = dateEl.value; loadMem(curDate); });
+
+/* ── Theme ── */
+const html = document.documentElement;
+const theme = localStorage.getItem('theme') || 'dark';
+html.setAttribute('data-theme', theme);
+setThemeIcon(theme);
+
+document.getElementById('theme-btn').addEventListener('click', () => {
+  const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  html.setAttribute('data-theme', next);
+  localStorage.setItem('theme', next);
+  setThemeIcon(next);
+});
+function setThemeIcon(t) {
+  document.getElementById('ico-sun').style.display  = t === 'dark'  ? 'block' : 'none';
+  document.getElementById('ico-moon').style.display = t === 'light' ? 'block' : 'none';
+}
+
+/* ── Firestore ── */
+async function getEntry(d)  {
+  const s = await getDoc(doc(db, COL, d));
+  return s.exists() ? s.data() : null;
+}
+async function saveEntry(data) {
+  const now = new Date().toISOString();
+  const ref = doc(db, COL, data.date);
+  const s = await getDoc(ref);
+  await setDoc(ref, { ...data, created_at: s.exists() ? s.data().created_at : now, updated_at: now });
+}
+async function delEntry(d) { await deleteDoc(doc(db, COL, d)); }
+
+async function getMems(dateStr) {
+  const [y,m,d] = dateStr.split('-').map(Number);
+  const q = query(collection(db, COL), orderBy('date'));
+  const snap = await getDocs(q);
+  let earliest = y;
+  snap.forEach(doc => { const yr = parseInt(doc.id); if (yr < earliest) earliest = yr; });
+  const out = [];
+  for (let i = 1; i <= y - earliest; i++) {
+    const past = `${y-i}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const found = snap.docs.find(dc => dc.id === past);
+    if (found) out.push({ ago: i, date: past, entry: found.data() });
+  }
+  return out;
+}
+
+async function getMonthDays(year, month) {
+  const pre = `${year}-${String(month+1).padStart(2,'0')}`;
+  const q = query(collection(db, COL), where('date','>=',`${pre}-01`), where('date','<=',`${pre}-31`), orderBy('date'));
+  const snap = await getDocs(q);
+  return new Set(snap.docs.map(d => parseInt(d.id.split('-')[2])));
+}
+
+/* ── Toast ── */
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2600);
+}
+
+/* ── Load Memories ── */
+async function loadMem(dateStr) {
+  const sk = document.getElementById('sk-loader');
+  const content = document.getElementById('mem-content');
+  sk.style.display = 'block'; content.innerHTML = '';
+
+  const [today, mems] = await Promise.all([getEntry(dateStr), getMems(dateStr)]);
+  sk.style.display = 'none';
+
+  // populate form
+  document.getElementById('item1').value = today?.item1 || '';
+  document.getElementById('item2').value = today?.item2 || '';
+  document.getElementById('item3').value = today?.item3 || '';
+
+  let html = '';
+
+  // Today card
+  if (today) {
+    const items = [today.item1, today.item2, today.item3].filter(Boolean);
+    html += `
+      <div class="entry-card" style="animation-delay:0ms">
+        <div class="entry-header">
+          <div class="entry-meta">
+            <span class="badge badge-today">오늘</span>
+            <span class="entry-date-str">${shortKo(dateStr)}</span>
+          </div>
+          <button class="del-btn" data-del="${dateStr}" title="삭제">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <polyline points="3 6 5 6 21 6"/>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+            </svg>
+          </button>
+        </div>
+        <div class="entry-body">
+          ${items.map((t,i) => `
+            <div class="entry-row">
+              <span class="entry-n">${i+1}</span>
+              <p class="entry-text">${escHtml(t)}</p>
+            </div>`).join('')}
+        </div>
+      </div>`;
+  } else {
+    html += `
+      <div class="card" style="animation:fadeUp .35s ease both">
+        <div class="empty">
+          <div class="empty-ico">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+              <path d="M12 20h9"/>
+              <path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/>
+            </svg>
+          </div>
+          <div class="empty-title">아직 기록이 없어요</div>
+          <div class="empty-desc">오늘의 소중한 기억을<br>왼쪽에 적어보세요 ✍️</div>
+        </div>
+      </div>`;
+  }
+
+  // Past memories
+  if (mems.length > 0) {
+    mems.forEach((mem, idx) => {
+      const items = [mem.entry.item1, mem.entry.item2, mem.entry.item3].filter(Boolean);
+      html += `
+        <div class="entry-card past-card" style="animation-delay:${(idx+1)*70}ms">
+          <div class="entry-header">
+            <div class="entry-meta">
+              <span class="badge badge-past">${mem.ago}년 전 오늘</span>
+              <span class="entry-date-str">${shortKo(mem.date)}</span>
+            </div>
+          </div>
+          <div class="entry-body">
+            ${items.map((t,i) => `
+              <div class="entry-row">
+                <span class="entry-n">${i+1}</span>
+                <p class="entry-text">${escHtml(t)}</p>
+              </div>`).join('')}
+          </div>
+        </div>`;
+    });
+  } else if (today) {
+    html += `
+      <div class="card" style="animation:fadeUp .35s ease .18s both">
+        <div class="empty" style="padding:22px 20px">
+          <span style="font-size:1.8rem">⏳</span>
+          <div class="empty-title" style="margin-top:4px">과거 기록이 쌓이면</div>
+          <div class="empty-desc">꾸준히 작성하면 1년 후, 2년 후…<br>소중한 추억을 되새길 수 있어요</div>
+        </div>
+      </div>`;
+  }
+
+  content.innerHTML = html;
+
+  // Delete handlers
+  content.querySelectorAll('[data-del]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (!confirm('이 일기를 삭제하시겠습니까?')) return;
+      try { await delEntry(btn.dataset.del); toast('삭제되었어요'); loadMem(curDate); }
+      catch { toast('삭제 중 오류가 발생했어요'); }
+    });
+  });
+}
+
+/* ── Save ── */
+document.getElementById('save-btn').addEventListener('click', async () => {
+  const [i1, i2, i3] = ['item1','item2','item3'].map(id => document.getElementById(id).value.trim());
+  if (!i1 && !i2 && !i3) { toast('최소 하나의 기억을 입력해주세요'); return; }
+  const btn = document.getElementById('save-btn');
+  const lbl = document.getElementById('save-label');
+  btn.disabled = true; lbl.innerHTML = '<span class="spin"></span>';
+  try {
+    await saveEntry({ date: curDate, item1: i1, item2: i2, item3: i3 });
+    toast('일기가 저장되었어요 ✓');
+    loadMem(curDate);
+  } catch { toast('저장 중 오류가 발생했어요'); }
+  finally { btn.disabled = false; lbl.textContent = '일기 저장하기'; }
+});
+
+/* ── Calendar ── */
+async function renderCal() {
+  document.getElementById('cal-label').textContent = `${calY}년 ${calM+1}월`;
+  const entryDays = await getMonthDays(calY, calM);
+  const todayStr  = toStr(new Date());
+  const firstDay  = new Date(calY, calM, 1).getDay();
+  const totalDays = new Date(calY, calM+1, 0).getDate();
+  const prevTotal = new Date(calY, calM, 0).getDate();
+  const HEADS     = ['일','월','화','수','목','금','토'];
+
+  let out = HEADS.map(h => `<div class="cal-hdr">${h}</div>`).join('');
+
+  for (let i = firstDay - 1; i >= 0; i--)
+    out += `<div class="cal-day dim">${prevTotal - i}</div>`;
+
+  for (let d = 1; d <= totalDays; d++) {
+    const ds = `${calY}-${String(calM+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const cls = ['cal-day', ds===todayStr?'today':'', entryDays.has(d)?'has-entry':''].filter(Boolean).join(' ');
+    out += `<div class="${cls}" data-ds="${ds}">${d}</div>`;
+  }
+
+  const total = firstDay + totalDays;
+  const fill  = total % 7 === 0 ? 0 : 7 - (total % 7);
+  for (let d = 1; d <= fill; d++) out += `<div class="cal-day dim">${d}</div>`;
+
+  const grid = document.getElementById('cal-grid');
+  grid.innerHTML = out;
+  grid.querySelectorAll('[data-ds]').forEach(el => {
+    el.addEventListener('click', () => {
+      curDate = el.dataset.ds;
+      dateEl.value = curDate;
+      switchView('home');
+      loadMem(curDate);
+    });
+  });
+}
+
+document.getElementById('cal-prev').addEventListener('click', () => {
+  if (--calM < 0) { calM = 11; calY--; } renderCal();
+});
+document.getElementById('cal-next').addEventListener('click', () => {
+  if (++calM > 11) { calM = 0; calY++; } renderCal();
+});
+
+/* ── View Switch ── */
+window.switchView = (v) => {
+  const home  = document.getElementById('home-view');
+  const cal   = document.getElementById('cal-wrapper');
+  const btnH  = document.getElementById('nav-home');
+  const btnC  = document.getElementById('nav-cal');
+  if (v === 'home') {
+    home.style.display = 'grid'; cal.style.display = 'none';
+    btnH.classList.add('active'); btnC.classList.remove('active');
+  } else {
+    home.style.display = 'none'; cal.style.display = 'block';
+    btnH.classList.remove('active'); btnC.classList.add('active');
+    renderCal();
+  }
+};
+
+/* ── Boot ── */
+loadMem(curDate);
+</script>
+</body>
 </html>
