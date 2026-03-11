@@ -5,798 +5,2081 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>오늘의 기억</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
   <style>
-    /* ── CSS Variables ── */
     :root {
-      --bg:           #F7F6F2;
-      --bg2:          #EFEDE8;
-      --surface:      #FFFFFF;
-      --surface2:     #F2F0EB;
-      --border:       rgba(0,0,0,0.08);
-      --text:         #1C1C1E;
-      --text2:        #6B6B6B;
-      --text3:        #B0B0B0;
-      --primary:      #6366F1;
-      --primary-soft: rgba(99,102,241,0.12);
-      --primary-glow: rgba(99,102,241,0.28);
-      --accent:       #A78BFA;
-      --danger:       #EF4444;
-      --danger-soft:  rgba(239,68,68,0.1);
-      --shadow:       0 4px 20px rgba(0,0,0,0.08);
-      --shadow-lg:    0 12px 40px rgba(0,0,0,0.12);
-      --radius:       16px;
-      --radius-sm:    10px;
-      --nav-h:        68px;
-      --header-h:     60px;
-      --transition:   0.2s cubic-bezier(0.4,0,0.2,1);
-    }
-    [data-theme="dark"] {
-      --bg:           #111118;
-      --bg2:          #18181F;
-      --surface:      #1E1E28;
-      --surface2:     #252532;
-      --border:       rgba(255,255,255,0.07);
-      --text:         #F0F0F8;
-      --text2:        #9090A8;
-      --text3:        #555568;
-      --primary:      #818CF8;
-      --primary-soft: rgba(129,140,248,0.15);
-      --primary-glow: rgba(129,140,248,0.32);
-      --accent:       #C4B5FD;
-      --danger:       #F87171;
-      --danger-soft:  rgba(248,113,113,0.12);
-      --shadow:       0 4px 20px rgba(0,0,0,0.4);
-      --shadow-lg:    0 12px 40px rgba(0,0,0,0.55);
+      --bg: #f5f1e8;
+      --bg2: #ece5d9;
+      --surface: rgba(255, 252, 246, 0.92);
+      --surface-strong: #fffaf2;
+      --surface2: #f2eadc;
+      --border: rgba(71, 53, 30, 0.12);
+      --text: #241c15;
+      --text2: #6b5d4c;
+      --text3: #a3947f;
+      --primary: #c96f3b;
+      --primary-soft: rgba(201, 111, 59, 0.12);
+      --primary-glow: rgba(201, 111, 59, 0.24);
+      --accent: #5d8b72;
+      --accent-soft: rgba(93, 139, 114, 0.12);
+      --danger: #d9534f;
+      --danger-soft: rgba(217, 83, 79, 0.1);
+      --shadow: 0 18px 40px rgba(62, 42, 19, 0.08);
+      --shadow-lg: 0 22px 50px rgba(62, 42, 19, 0.14);
+      --radius: 22px;
+      --radius-sm: 14px;
+      --header-h: 68px;
+      --nav-h: 76px;
+      --transition: 0.18s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    /* ── Reset ── */
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    [data-theme="dark"] {
+      --bg: #121317;
+      --bg2: #181a20;
+      --surface: rgba(28, 30, 37, 0.92);
+      --surface-strong: #20232b;
+      --surface2: #262933;
+      --border: rgba(255, 255, 255, 0.08);
+      --text: #f5f1eb;
+      --text2: #b4a798;
+      --text3: #6e655d;
+      --primary: #f08d49;
+      --primary-soft: rgba(240, 141, 73, 0.12);
+      --primary-glow: rgba(240, 141, 73, 0.26);
+      --accent: #7dc49d;
+      --accent-soft: rgba(125, 196, 157, 0.13);
+      --danger: #f07167;
+      --danger-soft: rgba(240, 113, 103, 0.12);
+      --shadow: 0 18px 40px rgba(0, 0, 0, 0.26);
+      --shadow-lg: 0 22px 50px rgba(0, 0, 0, 0.35);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
     body {
-      font-family: 'Noto Sans KR', -apple-system, sans-serif;
-      background: var(--bg);
-      color: var(--text);
       min-height: 100dvh;
       overflow-x: hidden;
+      background:
+        radial-gradient(circle at top left, rgba(240, 141, 73, 0.12), transparent 28%),
+        radial-gradient(circle at top right, rgba(125, 196, 157, 0.12), transparent 22%),
+        linear-gradient(180deg, var(--bg) 0%, color-mix(in srgb, var(--bg) 86%, #000 4%) 100%);
+      color: var(--text);
+      font-family: "Noto Sans KR", -apple-system, BlinkMacSystemFont, sans-serif;
       transition: background var(--transition), color var(--transition);
     }
-    ::-webkit-scrollbar { width: 5px; }
-    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
-    /* ── App Shell ── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
+
+    button, input, textarea, select { font: inherit; }
+
     #app { display: flex; flex-direction: column; min-height: 100dvh; }
 
-    /* ── Header ── */
     header {
-      position: sticky; top: 0; z-index: 50;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
       height: var(--header-h);
-      display: flex; align-items: center; justify-content: space-between;
       padding: 0 20px;
-      background: color-mix(in srgb, var(--bg) 82%, transparent);
-      backdrop-filter: blur(24px) saturate(1.6);
-      -webkit-backdrop-filter: blur(24px) saturate(1.6);
       border-bottom: 1px solid var(--border);
+      background: color-mix(in srgb, var(--surface) 88%, transparent);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
     }
-    .header-left { display: flex; align-items: center; gap: 11px; }
+
+    .header-left { display: flex; align-items: center; gap: 12px; }
+
     .logo {
-      width: 36px; height: 36px; border-radius: 11px; flex-shrink: 0;
-      background: linear-gradient(135deg, #818CF8 0%, #C4B5FD 100%);
-      display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 3px 10px var(--primary-glow);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 38px;
+      height: 38px;
+      border-radius: 13px;
+      background: linear-gradient(135deg, var(--primary) 0%, #f6be72 100%);
+      box-shadow: 0 8px 18px var(--primary-glow);
+      color: #fff;
+      flex-shrink: 0;
     }
+
     .logo svg { width: 18px; height: 18px; }
-    .header-title { font-size: 0.92rem; font-weight: 700; letter-spacing: -0.3px; }
-    .header-date  { font-size: 0.7rem;  color: var(--text2); margin-top: 2px; }
+    .header-title { font-size: 0.95rem; font-weight: 800; letter-spacing: -0.02em; }
+    .header-date { margin-top: 2px; color: var(--text2); font-size: 0.72rem; }
+
     .icon-btn {
-      width: 36px; height: 36px; border-radius: 10px;
-      border: 1px solid var(--border); background: var(--surface);
-      color: var(--text2); display: flex; align-items: center; justify-content: center;
-      cursor: pointer; transition: all var(--transition);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 38px;
+      height: 38px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--surface-strong);
+      color: var(--text2);
+      cursor: pointer;
+      transition: transform var(--transition), color var(--transition), background var(--transition);
     }
-    .icon-btn:hover { background: var(--surface2); color: var(--text); transform: scale(1.06); }
+
+    .icon-btn:hover { transform: translateY(-1px); background: var(--surface2); color: var(--text); }
     .icon-btn svg { width: 16px; height: 16px; }
 
-    /* ── Views wrapper ── */
-    #views { flex: 1; }
+    main {
+      flex: 1;
+      width: 100%;
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 22px 20px calc(var(--nav-h) + 28px);
+    }
 
-    /* ── Main grid (home) ── */
-    #home-view {
+    .view { display: none; }
+    .view.active { display: block; animation: fadeUp 0.22s ease both; }
+
+    .grid-home {
       display: grid;
-      grid-template-columns: 400px 1fr;
-      gap: 20px;
-      padding: 20px;
-      max-width: 1080px; margin: 0 auto; width: 100%;
-      padding-bottom: calc(var(--nav-h) + 20px);
+      grid-template-columns: 420px minmax(0, 1fr);
+      gap: 18px;
     }
-    #home-view.hidden { display: none; }
 
-    /* ── Calendar wrapper ── */
-    #cal-wrapper {
-      display: none;
-      padding: 20px;
-      max-width: 540px; margin: 0 auto; width: 100%;
-      padding-bottom: calc(var(--nav-h) + 20px);
-    }
-    #cal-wrapper.visible { display: block; }
+    .stack { display: flex; flex-direction: column; gap: 16px; }
 
-    /* ── Card ── */
     .card {
-      background: var(--surface);
-      border-radius: var(--radius);
       border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
       box-shadow: var(--shadow);
       padding: 20px;
-      transition: background var(--transition), box-shadow var(--transition);
     }
+
+    .hero-card {
+      position: relative;
+      overflow: hidden;
+      background:
+        linear-gradient(135deg, color-mix(in srgb, var(--primary) 18%, var(--surface-strong)) 0%, var(--surface) 100%);
+    }
+
+    .hero-card::after {
+      content: "";
+      position: absolute;
+      inset: auto -70px -70px auto;
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.18), transparent 62%);
+      pointer-events: none;
+    }
+
     .section-label {
-      font-size: 0.63rem; font-weight: 700; letter-spacing: 0.09em;
-      text-transform: uppercase; color: var(--text3);
-      display: flex; align-items: center; gap: 5px; margin-bottom: 10px;
-    }
-    .section-label svg { width: 11px; height: 11px; }
-
-    /* ── Date Input ── */
-    .date-block { margin-bottom: 18px; }
-    .date-input {
-      width: 100%; padding: 11px 14px;
-      background: var(--bg2); border: 1.5px solid transparent;
-      border-radius: var(--radius-sm); color: var(--text);
-      font-family: inherit; font-size: 0.88rem; font-weight: 500;
-      cursor: pointer; transition: all var(--transition);
-      -webkit-appearance: none;
-    }
-    .date-input::-webkit-calendar-picker-indicator {
-      opacity: 0.35; cursor: pointer;
-    }
-    [data-theme="dark"] .date-input::-webkit-calendar-picker-indicator {
-      filter: invert(1); opacity: 0.35;
-    }
-    .date-input:hover  { border-color: var(--primary-glow); }
-    .date-input:focus  {
-      outline: none; border-color: var(--primary);
-      background: var(--surface); box-shadow: 0 0 0 3px var(--primary-soft);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 12px;
+      color: var(--text3);
+      font-size: 0.66rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
     }
 
-    /* ── Memory Inputs ── */
-    .fields { display: flex; flex-direction: column; gap: 14px; margin-bottom: 18px; }
+    .section-label svg { width: 12px; height: 12px; }
+    .hero-title { font-size: 1.32rem; font-weight: 800; line-height: 1.3; letter-spacing: -0.03em; }
+    .hero-sub { margin-top: 8px; color: var(--text2); font-size: 0.9rem; line-height: 1.7; }
+
+    .quick-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .stat-chip {
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: color-mix(in srgb, var(--surface-strong) 82%, transparent);
+    }
+
+    .stat-chip strong {
+      display: block;
+      font-size: 1rem;
+      font-weight: 800;
+    }
+
+    .stat-chip span {
+      display: block;
+      margin-top: 3px;
+      color: var(--text2);
+      font-size: 0.74rem;
+    }
+
+    .date-block { margin-bottom: 16px; }
+
+    .date-input,
+    .mem-input,
+    .search-input,
+    .filter-select {
+      width: 100%;
+      border: 1.5px solid transparent;
+      border-radius: var(--radius-sm);
+      background: var(--bg2);
+      color: var(--text);
+      transition: border-color var(--transition), background var(--transition), box-shadow var(--transition);
+    }
+
+    .date-input,
+    .search-input,
+    .filter-select {
+      padding: 12px 14px;
+      font-size: 0.9rem;
+    }
+
+    .date-input::-webkit-calendar-picker-indicator { opacity: 0.35; cursor: pointer; }
+    [data-theme="dark"] .date-input::-webkit-calendar-picker-indicator { filter: invert(1); }
+
+    .date-input:hover,
+    .mem-input:hover,
+    .search-input:hover,
+    .filter-select:hover { border-color: var(--primary-glow); }
+
+    .date-input:focus,
+    .mem-input:focus,
+    .search-input:focus,
+    .filter-select:focus {
+      outline: none;
+      border-color: var(--primary);
+      background: var(--surface-strong);
+      box-shadow: 0 0 0 4px var(--primary-soft);
+    }
+
+    .fields { display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; }
+
+    .item-field {
+      padding: 14px;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: color-mix(in srgb, var(--surface-strong) 86%, transparent);
+    }
+
+    .field-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
     .field-label {
-      display: flex; align-items: center; gap: 7px;
-      font-size: 0.75rem; font-weight: 600; color: var(--text2); margin-bottom: 7px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text2);
+      font-size: 0.78rem;
+      font-weight: 700;
     }
-    .field-num {
-      width: 19px; height: 19px; border-radius: 50%; flex-shrink: 0;
-      background: var(--primary-soft); color: var(--primary);
-      font-size: 0.63rem; font-weight: 700;
-      display: flex; align-items: center; justify-content: center;
+
+    .field-num,
+    .entry-n {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      border-radius: 999px;
+      background: var(--primary-soft);
+      color: var(--primary);
+      font-size: 0.66rem;
+      font-weight: 800;
+      flex-shrink: 0;
     }
+
+    .mini-btn,
+    .ghost-btn,
+    .solid-btn,
+    .random-btn {
+      border: none;
+      cursor: pointer;
+      transition: transform var(--transition), background var(--transition), color var(--transition), box-shadow var(--transition);
+    }
+
+    .mini-btn {
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: var(--danger-soft);
+      color: var(--danger);
+      font-size: 0.72rem;
+      font-weight: 700;
+    }
+
+    .mini-btn:hover { transform: translateY(-1px); }
+    .mini-btn[disabled] { visibility: hidden; }
+
     .mem-input {
-      width: 100%; padding: 11px 14px;
-      background: var(--bg2); border: 1.5px solid transparent;
-      border-radius: var(--radius-sm); color: var(--text);
-      font-family: inherit; font-size: 0.865rem; line-height: 1.65;
-      resize: none; min-height: 70px; transition: all var(--transition);
+      min-height: 74px;
+      padding: 12px 14px;
+      resize: vertical;
+      font-size: 0.9rem;
+      line-height: 1.7;
     }
+
     .mem-input::placeholder { color: var(--text3); }
-    .mem-input:hover  { border-color: var(--primary-glow); }
-    .mem-input:focus  {
-      outline: none; border-color: var(--primary);
-      background: var(--surface); box-shadow: 0 0 0 3px var(--primary-soft);
+
+    .action-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
     }
 
-    /* ── Save Button ── */
-    .save-btn {
-      width: 100%; padding: 13px;
-      background: linear-gradient(135deg, #6366F1 0%, #A78BFA 100%);
-      color: #fff; border: none; border-radius: var(--radius-sm);
-      font-family: inherit; font-size: 0.88rem; font-weight: 600;
-      cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 7px;
-      box-shadow: 0 4px 14px var(--primary-glow);
-      transition: all var(--transition); position: relative; overflow: hidden;
+    .ghost-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      padding: 11px 14px;
+      border-radius: 14px;
+      background: var(--surface2);
+      color: var(--text2);
+      font-size: 0.84rem;
+      font-weight: 700;
     }
-    .save-btn::after {
-      content: ''; position: absolute; inset: 0;
-      background: linear-gradient(135deg, rgba(255,255,255,0.14) 0%, transparent);
-      opacity: 0; transition: opacity var(--transition);
+
+    .ghost-btn:hover { transform: translateY(-1px); background: var(--primary-soft); color: var(--primary); }
+
+    .status-line {
+      margin-top: -4px;
+      margin-bottom: 16px;
+      color: var(--text3);
+      font-size: 0.74rem;
     }
-    .save-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 20px var(--primary-glow); }
-    .save-btn:hover:not(:disabled)::after { opacity: 1; }
-    .save-btn:active:not(:disabled) { transform: none; }
-    .save-btn:disabled { opacity: 0.55; cursor: not-allowed; }
-    .save-btn svg { width: 15px; height: 15px; }
 
-    /* ── Right panel ── */
-    .right-panel { display: flex; flex-direction: column; gap: 14px; }
+    .emotion-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
 
-    /* ── Entry Cards ── */
+    .emotion-chip {
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--surface-strong);
+      color: var(--text2);
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background var(--transition), color var(--transition), border-color var(--transition), transform var(--transition);
+    }
+
+    .emotion-chip.active {
+      background: var(--primary-soft);
+      border-color: color-mix(in srgb, var(--primary) 42%, transparent);
+      color: var(--primary);
+    }
+
+    .emotion-chip:hover { transform: translateY(-1px); }
+
+    .slider-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .slider-row input[type="range"] {
+      width: 100%;
+      accent-color: var(--primary);
+    }
+
+    .slider-badge {
+      min-width: 52px;
+      padding: 8px 10px;
+      border-radius: 12px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      text-align: center;
+      font-size: 0.76rem;
+      font-weight: 800;
+    }
+
+    .save-btn,
+    .solid-btn,
+    .random-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border-radius: 14px;
+      color: #fff;
+      font-weight: 800;
+    }
+
+    .save-btn,
+    .solid-btn {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, var(--primary) 0%, #f6be72 100%);
+      box-shadow: 0 10px 24px var(--primary-glow);
+    }
+
+    .save-btn:hover:not(:disabled),
+    .solid-btn:hover { transform: translateY(-1px); }
+    .save-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    .right-panel { display: flex; flex-direction: column; gap: 16px; }
+
     .entry-card {
-      background: var(--surface);
+      overflow: hidden;
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      overflow: hidden;
+      background: var(--surface);
       box-shadow: var(--shadow);
-      animation: fadeUp 0.35s ease both;
-      transition: box-shadow var(--transition);
+      animation: fadeUp 0.3s ease both;
     }
+
     .entry-card:hover { box-shadow: var(--shadow-lg); }
+
     .entry-header {
-      padding: 13px 16px 11px;
-      display: flex; align-items: center; justify-content: space-between;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 15px 16px 12px;
       border-bottom: 1px solid var(--border);
     }
-    .entry-meta { display: flex; align-items: center; gap: 9px; }
+
+    .entry-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+
     .badge {
-      padding: 3px 9px; border-radius: 100px;
-      font-size: 0.65rem; font-weight: 700; letter-spacing: 0.03em;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-size: 0.68rem;
+      font-weight: 800;
+      letter-spacing: 0.02em;
     }
+
     .badge-today { background: var(--primary); color: #fff; }
-    .badge-past  {
-      background: var(--surface2); color: var(--text2);
-      border: 1px solid var(--border);
-    }
-    .entry-date-str { font-size: 0.8rem; color: var(--text2); font-weight: 500; }
+    .badge-past { background: var(--surface2); color: var(--text2); border: 1px solid var(--border); }
+    .badge-emo { background: var(--accent-soft); color: var(--accent); }
+    .entry-date-str { color: var(--text2); font-size: 0.8rem; font-weight: 600; }
+
     .del-btn {
-      width: 30px; height: 30px; border-radius: 8px;
-      border: none; background: transparent; color: var(--text3);
-      cursor: pointer; display: flex; align-items: center; justify-content: center;
-      opacity: 0; transition: all var(--transition);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border: none;
+      border-radius: 10px;
+      background: transparent;
+      color: var(--text3);
+      cursor: pointer;
     }
-    .entry-card:hover .del-btn { opacity: 1; }
+
     .del-btn:hover { background: var(--danger-soft); color: var(--danger); }
-    .del-btn svg { width: 13px; height: 13px; }
-    .entry-body { padding: 14px 16px; display: flex; flex-direction: column; gap: 11px; }
-    .entry-row { display: flex; gap: 11px; align-items: flex-start; }
-    .entry-n {
-      width: 21px; height: 21px; border-radius: 50%; flex-shrink: 0;
-      background: var(--primary-soft); color: var(--primary);
-      font-size: 0.63rem; font-weight: 700; margin-top: 1px;
-      display: flex; align-items: center; justify-content: center;
-    }
-    .past-card .entry-n { background: var(--surface2); color: var(--text2); }
-    .entry-text { font-size: 0.858rem; line-height: 1.65; color: var(--text); flex: 1; }
 
-    /* ── Empty State ── */
+    .entry-body {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 16px;
+    }
+
+    .entry-row { display: flex; align-items: flex-start; gap: 11px; }
+    .entry-text { flex: 1; font-size: 0.9rem; line-height: 1.72; }
+
+    .entry-footer {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 0 16px 16px;
+    }
+
+    .tag-chip {
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: var(--surface2);
+      color: var(--text2);
+      font-size: 0.74rem;
+      font-weight: 700;
+    }
+
     .empty {
-      display: flex; flex-direction: column; align-items: center;
-      justify-content: center; gap: 10px; padding: 32px 20px; text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 34px 20px;
+      text-align: center;
     }
+
     .empty-ico {
-      width: 56px; height: 56px; border-radius: 18px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 58px;
+      height: 58px;
+      border-radius: 20px;
       background: var(--primary-soft);
-      display: flex; align-items: center; justify-content: center; margin-bottom: 2px;
-    }
-    .empty-ico svg { width: 26px; height: 26px; color: var(--primary); }
-    .empty-title { font-size: 0.9rem; font-weight: 600; color: var(--text2); }
-    .empty-desc  { font-size: 0.78rem; color: var(--text3); line-height: 1.6; }
-
-    /* ── Skeleton ── */
-    .sk {
-      background: linear-gradient(90deg, var(--surface2) 25%, var(--surface) 50%, var(--surface2) 75%);
-      background-size: 200%; animation: shimmer 1.4s infinite; border-radius: 6px;
+      color: var(--primary);
     }
 
-    /* ── Calendar ── */
+    .empty-title { color: var(--text2); font-size: 0.95rem; font-weight: 700; }
+    .empty-desc { color: var(--text3); font-size: 0.8rem; line-height: 1.65; }
+
+    .explore-grid,
+    .summary-grid,
+    .settings-grid {
+      display: grid;
+      grid-template-columns: 320px minmax(0, 1fr);
+      gap: 18px;
+    }
+
+    .search-group { display: flex; flex-direction: column; gap: 12px; }
+    .filter-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    .search-results {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .result-card {
+      padding: 16px;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: color-mix(in srgb, var(--surface-strong) 88%, transparent);
+    }
+
+    .result-card h4 {
+      margin-bottom: 6px;
+      font-size: 0.94rem;
+      font-weight: 800;
+    }
+
+    .result-card p {
+      color: var(--text2);
+      font-size: 0.85rem;
+      line-height: 1.7;
+    }
+
+    .result-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    mark {
+      padding: 0 2px;
+      border-radius: 4px;
+      background: rgba(246, 190, 114, 0.45);
+      color: inherit;
+    }
+
+    .random-btn {
+      width: 100%;
+      padding: 12px 14px;
+      background: linear-gradient(135deg, var(--accent) 0%, #9ad7b1 100%);
+      box-shadow: 0 10px 22px rgba(125, 196, 157, 0.2);
+    }
+
+    .random-card {
+      min-height: 200px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .summary-top {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .summary-metric {
+      padding: 16px;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: color-mix(in srgb, var(--surface-strong) 88%, transparent);
+    }
+
+    .summary-metric strong {
+      display: block;
+      margin-top: 6px;
+      font-size: 1.15rem;
+      font-weight: 800;
+    }
+
+    .summary-metric span { color: var(--text2); font-size: 0.78rem; }
+
+    .summary-section {
+      margin-top: 14px;
+      padding: 18px;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: color-mix(in srgb, var(--surface-strong) 86%, transparent);
+    }
+
+    .summary-section h4 {
+      margin-bottom: 10px;
+      font-size: 0.92rem;
+      font-weight: 800;
+    }
+
+    .summary-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .summary-list .tag-chip { background: var(--primary-soft); color: var(--primary); }
+
+    .emotion-bars {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .emotion-bar-row {
+      display: grid;
+      grid-template-columns: 74px 1fr 42px;
+      gap: 10px;
+      align-items: center;
+      font-size: 0.8rem;
+      color: var(--text2);
+    }
+
+    .emotion-bar-track {
+      height: 10px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: var(--surface2);
+    }
+
+    .emotion-bar-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--accent) 0%, #9ad7b1 100%);
+    }
+
+    .quote-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      color: var(--text2);
+      font-size: 0.87rem;
+      line-height: 1.7;
+    }
+
+    .quote-item {
+      padding: 12px 14px;
+      border-left: 3px solid var(--primary);
+      border-radius: 0 14px 14px 0;
+      background: color-mix(in srgb, var(--surface2) 74%, transparent);
+    }
+
+    .settings-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .file-input { display: none; }
+
+    .danger-btn {
+      background: linear-gradient(135deg, var(--danger) 0%, #f39a88 100%);
+      box-shadow: 0 10px 24px rgba(217, 83, 79, 0.22);
+    }
+
+    .settings-note {
+      color: var(--text2);
+      font-size: 0.84rem;
+      line-height: 1.7;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 120;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(15, 17, 21, 0.56);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+    .modal-backdrop.open { display: flex; }
+
+    .modal-card {
+      width: min(680px, 100%);
+      max-height: min(80dvh, 760px);
+      overflow: auto;
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      background: var(--surface);
+      box-shadow: var(--shadow-lg);
+      padding: 20px;
+    }
+
+    .modal-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .modal-title {
+      font-size: 1rem;
+      font-weight: 800;
+    }
+
     .cal-card { padding: 20px; }
-    .cal-nav {
-      display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px;
-    }
-    .cal-month { font-size: 1rem; font-weight: 700; }
+    .cal-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+    .cal-month { font-size: 1rem; font-weight: 800; }
+
     .cal-arrow {
-      width: 34px; height: 34px; border-radius: 9px;
-      border: 1px solid var(--border); background: var(--surface);
-      color: var(--text2); display: flex; align-items: center; justify-content: center;
-      cursor: pointer; transition: all var(--transition);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--surface-strong);
+      color: var(--text2);
+      cursor: pointer;
     }
+
     .cal-arrow:hover { background: var(--surface2); color: var(--text); }
-    .cal-arrow svg { width: 15px; height: 15px; }
-    .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
-    .cal-hdr {
-      text-align: center; font-size: 0.67rem; font-weight: 600;
-      color: var(--text3); padding: 6px 0; letter-spacing: 0.05em;
-    }
+    .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+    .cal-hdr { padding: 6px 0; color: var(--text3); font-size: 0.67rem; font-weight: 800; text-align: center; }
+
     .cal-day {
-      aspect-ratio: 1; border-radius: 9px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 0.8rem; cursor: pointer; position: relative;
-      color: var(--text2); transition: all var(--transition);
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      aspect-ratio: 1;
+      border-radius: 12px;
+      color: var(--text2);
+      cursor: pointer;
+      transition: background var(--transition), color var(--transition), transform var(--transition);
     }
-    .cal-day:hover:not(.empty) { background: var(--surface2); color: var(--text); }
-    .cal-day.today  { background: var(--primary); color: #fff; font-weight: 700; }
-    .cal-day.today:hover { background: var(--accent); }
+
+    .cal-day:hover:not(.dim) { transform: translateY(-1px); background: var(--surface2); color: var(--text); }
+    .cal-day.today { background: var(--primary); color: #fff; font-weight: 800; }
     .cal-day.has-entry::after {
-      content: ''; position: absolute; bottom: 3px; left: 50%;
-      transform: translateX(-50%); width: 3.5px; height: 3.5px;
-      border-radius: 50%; background: var(--primary);
+      content: "";
+      position: absolute;
+      bottom: 5px;
+      left: 50%;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: var(--accent);
+      transform: translateX(-50%);
     }
-    .cal-day.today.has-entry::after { background: rgba(255,255,255,0.75); }
-    .cal-day.dim { color: var(--text3); opacity: 0.38; }
-    .cal-day.empty { cursor: default; }
 
-    /* ── Bottom Nav ── */
+    .cal-day.dim { color: var(--text3); opacity: 0.32; cursor: default; }
+
     nav {
-      position: fixed; bottom: 0; left: 0; right: 0;
-      height: var(--nav-h); z-index: 50;
-      background: color-mix(in srgb, var(--surface) 88%, transparent);
-      backdrop-filter: blur(24px) saturate(1.6);
-      -webkit-backdrop-filter: blur(24px) saturate(1.6);
+      position: fixed;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      height: var(--nav-h);
+      padding: 0 16px;
+      padding-bottom: env(safe-area-inset-bottom);
       border-top: 1px solid var(--border);
-      display: flex; align-items: center; justify-content: center; gap: 6px;
-      padding: 0 20px; padding-bottom: env(safe-area-inset-bottom);
+      background: color-mix(in srgb, var(--surface) 90%, transparent);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
     }
-    .nav-btn {
-      flex: 1; max-width: 110px;
-      display: flex; flex-direction: column; align-items: center; gap: 3px;
-      padding: 9px 8px; border-radius: var(--radius-sm);
-      cursor: pointer; transition: all var(--transition);
-      border: none; background: transparent; color: var(--text3);
-      font-family: inherit;
-    }
-    .nav-btn.active { color: var(--primary); background: var(--primary-soft); }
-    .nav-btn:hover:not(.active) { color: var(--text2); background: var(--surface2); }
-    .nav-btn svg { width: 21px; height: 21px; stroke-width: 1.75; }
-    .nav-btn span { font-size: 0.66rem; font-weight: 600; letter-spacing: 0.02em; }
 
-    /* ── Toast ── */
+    .nav-btn {
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      max-width: 110px;
+      padding: 10px 8px;
+      border: none;
+      border-radius: 16px;
+      background: transparent;
+      color: var(--text3);
+      cursor: pointer;
+      transition: background var(--transition), color var(--transition);
+    }
+
+    .nav-btn.active { background: var(--primary-soft); color: var(--primary); }
+    .nav-btn svg { width: 20px; height: 20px; stroke-width: 1.9; }
+    .nav-btn span { font-size: 0.68rem; font-weight: 800; }
+
     .toast {
-      position: fixed; bottom: calc(var(--nav-h) + 14px); left: 50%;
+      position: fixed;
+      bottom: calc(var(--nav-h) + 14px);
+      left: 50%;
+      z-index: 100;
+      padding: 10px 18px;
+      border-radius: 999px;
+      background: var(--text);
+      color: var(--bg);
+      font-size: 0.8rem;
+      font-weight: 700;
+      opacity: 0;
+      pointer-events: none;
       transform: translateX(-50%) translateY(16px);
-      background: var(--text); color: var(--bg);
-      padding: 9px 18px; border-radius: 100px;
-      font-size: 0.8rem; font-weight: 500;
-      opacity: 0; pointer-events: none; white-space: nowrap;
-      transition: all 0.28s ease; z-index: 200;
+      transition: opacity 0.22s ease, transform 0.22s ease;
       box-shadow: var(--shadow-lg);
     }
-    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-    /* ── Spinner ── */
-    .spin {
-      width: 15px; height: 15px; border-radius: 50%;
-      border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff;
-      animation: rotate 0.65s linear infinite; display: inline-block;
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
     }
 
-    /* ── Animations ── */
+    .spin {
+      display: inline-block;
+      width: 15px;
+      height: 15px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: rotate 0.65s linear infinite;
+    }
+
     @keyframes fadeUp {
       from { opacity: 0; transform: translateY(10px); }
-      to   { opacity: 1; transform: translateY(0); }
+      to { opacity: 1; transform: translateY(0); }
     }
-    @keyframes shimmer {
-      0%   { background-position: 200% 0; }
-      100% { background-position: -200% 0; }
-    }
-    @keyframes rotate { to { transform: rotate(360deg); } }
 
-    /* ── Responsive ── */
+    @keyframes rotate {
+      to { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 980px) {
+      .grid-home,
+      .explore-grid,
+      .summary-grid,
+      .settings-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
     @media (max-width: 720px) {
-      #home-view { grid-template-columns: 1fr; gap: 14px; padding: 14px; }
       header { padding: 0 14px; }
-      nav { padding: 0 14px; padding-bottom: env(safe-area-inset-bottom); }
+      main { padding: 14px 14px calc(var(--nav-h) + 18px); }
+      .quick-stats,
+      .summary-top { grid-template-columns: 1fr; }
+      .filter-row { grid-template-columns: 1fr; }
+      nav { padding: 0 10px; }
     }
   </style>
 </head>
 <body>
-<div id="app">
-
-  <!-- ── Header ── -->
-  <header>
-    <div class="header-left">
-      <div class="logo">
-        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/>
-          <polyline points="12 6 12 12 16 14"/>
+  <div id="app">
+    <header>
+      <div class="header-left">
+        <div class="logo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 20h9"></path>
+            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"></path>
+          </svg>
+        </div>
+        <div>
+          <div class="header-title">오늘의 기억</div>
+          <div class="header-date" id="hdr-date"></div>
+        </div>
+      </div>
+      <button class="icon-btn" id="theme-btn" aria-label="테마 전환">
+        <svg id="ico-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <circle cx="12" cy="12" r="4"></circle>
+          <line x1="12" y1="1" x2="12" y2="3"></line>
+          <line x1="12" y1="21" x2="12" y2="23"></line>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+          <line x1="1" y1="12" x2="3" y2="12"></line>
+          <line x1="21" y1="12" x2="23" y2="12"></line>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
         </svg>
-      </div>
-      <div>
-        <div class="header-title">오늘의 기억</div>
-        <div class="header-date" id="hdr-date"></div>
-      </div>
-    </div>
-    <button class="icon-btn" id="theme-btn" title="테마">
-      <!-- sun (shown in dark mode) -->
-      <svg id="ico-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-        <circle cx="12" cy="12" r="5"/>
-        <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
-        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
-        <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
-        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
-      </svg>
-      <!-- moon (shown in light mode) -->
-      <svg id="ico-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="display:none">
-        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-      </svg>
-    </button>
-  </header>
+        <svg id="ico-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="display:none">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+      </button>
+    </header>
 
-  <!-- ── Views ── -->
-  <div id="views">
+    <main>
+      <section id="view-home" class="view active">
+        <div class="grid-home">
+          <div class="stack">
+            <div class="card hero-card">
+              <div class="section-label">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 20h9"></path>
+                  <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"></path>
+                </svg>
+                오늘의 작성
+              </div>
+              <div class="hero-title">한 줄만 남겨도 충분하고, 더 길게 적어도 됩니다.</div>
+              <div class="hero-sub">기억 개수는 자유롭게 늘리고 줄일 수 있고, 감정과 함께 기록을 남길 수 있습니다.</div>
+              <div class="quick-stats" id="quick-stats"></div>
+            </div>
 
-    <!-- Home View -->
-    <div id="home-view">
+            <div class="card">
+              <div class="date-block">
+                <div class="section-label">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                    <rect x="3" y="4" width="18" height="18" rx="2"></rect>
+                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                  </svg>
+                  날짜 선택
+                </div>
+                <input type="date" class="date-input" id="date-input" />
+              </div>
 
-      <!-- LEFT: Form -->
-      <div>
-        <div class="card">
-          <!-- Date -->
-          <div class="date-block">
-            <div class="section-label">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-                <rect x="3" y="4" width="18" height="18" rx="2"/>
-                <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
-                <line x1="3" y1="10" x2="21" y2="10"/>
+              <div class="section-label">기억 항목</div>
+              <div class="fields" id="fields"></div>
+              <div class="action-row">
+                <button class="ghost-btn" id="add-item-btn" type="button">+ 기억 추가</button>
+              </div>
+
+              <div class="section-label">오늘의 감정</div>
+              <div class="emotion-grid" id="emotion-grid"></div>
+              <div class="slider-row">
+                <input id="emotion-intensity" type="range" min="1" max="5" value="3" />
+                <div class="slider-badge" id="emotion-intensity-label">3 / 5</div>
+              </div>
+
+              <div class="status-line" id="save-status">아직 저장되지 않았습니다.</div>
+              <button class="save-btn" id="save-btn" type="button">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                  <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                  <polyline points="7 3 7 8 15 8"></polyline>
+                </svg>
+                <span id="save-label">일기 저장하기</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="right-panel">
+            <div class="card" id="today-panel"></div>
+            <div class="card" id="anniversary-panel"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-explore" class="view">
+        <div class="explore-grid">
+          <div class="stack">
+            <div class="card">
+              <div class="section-label">기록 탐색</div>
+              <div class="search-group">
+                <input class="search-input" id="search-query" type="search" placeholder="단어, 문장, 주제를 검색해보세요" />
+                <div class="filter-row">
+                  <input class="date-input" id="search-from" type="date" />
+                  <input class="date-input" id="search-to" type="date" />
+                </div>
+                <select class="filter-select" id="search-emotion">
+                  <option value="">감정 전체</option>
+                </select>
+                <button class="random-btn" id="random-entry-btn" type="button">랜덤 기록 보기</button>
+              </div>
+            </div>
+            <div class="card random-card" id="random-panel"></div>
+          </div>
+
+          <div class="card">
+            <div class="section-label">검색 결과</div>
+            <div class="search-results" id="search-results"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-calendar" class="view">
+        <div class="card cal-card">
+          <div class="cal-nav">
+            <button class="cal-arrow" id="cal-prev" type="button" aria-label="이전 달">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">
+                <polyline points="15 18 9 12 15 6"></polyline>
               </svg>
-              날짜 선택
+            </button>
+            <span class="cal-month" id="cal-label"></span>
+            <button class="cal-arrow" id="cal-next" type="button" aria-label="다음 달">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </button>
+          </div>
+          <div class="cal-grid" id="cal-grid"></div>
+        </div>
+      </section>
+
+      <section id="view-summary" class="view">
+        <div class="summary-grid">
+          <div class="card">
+            <div class="section-label">기간 요약</div>
+            <div class="search-group">
+              <select class="filter-select" id="summary-range">
+                <option value="7">최근 7일</option>
+                <option value="30">최근 30일</option>
+                <option value="custom">직접 선택</option>
+              </select>
+              <div class="filter-row">
+                <input class="date-input" id="summary-from" type="date" />
+                <input class="date-input" id="summary-to" type="date" />
+              </div>
+              <button class="solid-btn" id="summary-refresh" type="button">요약 새로 보기</button>
             </div>
-            <input type="date" class="date-input" id="date-input" />
           </div>
 
-          <!-- Memories -->
-          <div class="fields">
-            <div>
-              <div class="field-label"><span class="field-num">1</span> 첫 번째 기억</div>
-              <textarea class="mem-input" id="item1" placeholder="오늘 감사했던 일은?" rows="3"></textarea>
-            </div>
-            <div>
-              <div class="field-label"><span class="field-num">2</span> 두 번째 기억</div>
-              <textarea class="mem-input" id="item2" placeholder="오늘 배운 것은?" rows="3"></textarea>
-            </div>
-            <div>
-              <div class="field-label"><span class="field-num">3</span> 세 번째 기억</div>
-              <textarea class="mem-input" id="item3" placeholder="내일 하고 싶은 일은?" rows="3"></textarea>
+          <div class="card">
+            <div class="summary-top" id="summary-top"></div>
+            <div id="summary-detail"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-settings" class="view">
+        <div class="settings-grid">
+          <div class="card">
+            <div class="section-label">데이터 관리</div>
+            <div class="settings-actions">
+              <button class="solid-btn" id="export-json-btn" type="button">JSON 백업 내보내기</button>
+              <button class="ghost-btn" id="export-csv-btn" type="button">CSV 내보내기</button>
+              <button class="ghost-btn" id="import-json-btn" type="button">백업 파일 가져오기</button>
+              <input class="file-input" id="import-json-file" type="file" accept="application/json" />
+              <button class="solid-btn danger-btn" id="clear-data-btn" type="button">모든 로컬 데이터 초기화</button>
             </div>
           </div>
 
-          <!-- Save -->
-          <button class="save-btn" id="save-btn">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
-              <polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
+          <div class="card">
+            <div class="section-label">상태</div>
+            <div class="summary-section">
+              <h4>로컬 저장 현황</h4>
+              <div class="quote-list" id="settings-status"></div>
+            </div>
+            <div class="summary-section">
+              <h4>자동저장 동작</h4>
+              <div class="settings-note">
+                입력 중인 초안은 날짜별로 자동 저장됩니다. 저장 버튼을 누르지 않아도 브라우저를 다시 열면 임시 초안을 복원합니다.
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <nav>
+      <button class="nav-btn active" id="nav-home" data-view="home" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+          <polyline points="9 22 9 12 15 12 15 22"></polyline>
+        </svg>
+        <span>작성</span>
+      </button>
+      <button class="nav-btn" id="nav-explore" data-view="explore" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="7"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <span>탐색</span>
+      </button>
+      <button class="nav-btn" id="nav-cal" data-view="calendar" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="4" width="18" height="18" rx="2"></rect>
+          <line x1="16" y1="2" x2="16" y2="6"></line>
+          <line x1="8" y1="2" x2="8" y2="6"></line>
+          <line x1="3" y1="10" x2="21" y2="10"></line>
+        </svg>
+        <span>달력</span>
+      </button>
+      <button class="nav-btn" id="nav-summary" data-view="summary" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 20V10"></path>
+          <path d="M12 20V4"></path>
+          <path d="M6 20v-6"></path>
+        </svg>
+        <span>요약</span>
+      </button>
+      <button class="nav-btn" id="nav-settings" data-view="settings" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.65 1.65 0 0 0 15 19.4a1.65 1.65 0 0 0-1 .6 1.65 1.65 0 0 0-.33 1V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1-.6 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-.6-1 1.65 1.65 0 0 0-1-.33H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0 .6-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-.6 1.65 1.65 0 0 0 .33-1V3a2 2 0 1 1 4 0v.09A1.65 1.65 0 0 0 15 4.6a1.65 1.65 0 0 0 1 .6 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.24.31.44.65.6 1 .11.32.16.65.16 1s-.05.68-.16 1c-.16.35-.36.69-.6 1z"></path>
+        </svg>
+        <span>설정</span>
+      </button>
+    </nav>
+
+    <div class="toast" id="toast"></div>
+
+    <div class="modal-backdrop" id="entry-modal">
+      <div class="modal-card">
+        <div class="modal-head">
+          <div class="modal-title" id="modal-title">기록 상세</div>
+          <button class="icon-btn" id="modal-close-btn" type="button" aria-label="닫기">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
             </svg>
-            <span id="save-label">일기 저장하기</span>
           </button>
         </div>
-      </div>
-
-      <!-- RIGHT: Memories -->
-      <div class="right-panel">
-        <div id="sk-loader">
-          <div class="card" style="display:flex;flex-direction:column;gap:12px">
-            <div class="sk" style="height:18px;width:35%"></div>
-            <div class="sk" style="height:13px"></div>
-            <div class="sk" style="height:13px;width:80%"></div>
-            <div class="sk" style="height:13px;width:60%"></div>
-          </div>
-        </div>
-        <div id="mem-content"></div>
-      </div>
-
-    </div><!-- /home-view -->
-
-    <!-- Calendar View -->
-    <div id="cal-wrapper">
-      <div class="card cal-card">
-        <div class="cal-nav">
-          <button class="cal-arrow" id="cal-prev">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
-          </button>
-          <span class="cal-month" id="cal-label"></span>
-          <button class="cal-arrow" id="cal-next">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
-          </button>
-        </div>
-        <div class="cal-grid" id="cal-grid"></div>
+        <div id="modal-body"></div>
       </div>
     </div>
+  </div>
 
-  </div><!-- /views -->
+  <script>
+    const ENTRY_KEY = "diary-app-entries-v2";
+    const LEGACY_ENTRY_KEY = "diary-app-entries";
+    const DRAFT_KEY = "diary-app-drafts-v1";
+    const THEME_KEY = "diary-app-theme";
+    const EMOTIONS = ["기쁨", "감사", "평온", "불안", "피곤", "슬픔", "성취감", "외로움"];
+    const STOP_WORDS = new Set(["그리고", "하지만", "오늘", "정말", "조금", "너무", "그냥", "에서", "에게", "이제", "다시", "했다", "했다는", "했다가", "같다", "있다", "했다며", "위해"]);
+    const FIELD_PLACEHOLDERS = [
+      "오늘 감사했던 일은?",
+      "오늘 배운 것은?",
+      "내일 하고 싶은 일은?",
+      "기억에 남은 대화는?",
+      "오늘 가장 강했던 순간은?"
+    ];
 
-  <!-- ── Bottom Nav ── -->
-  <nav>
-    <button class="nav-btn active" id="nav-home" onclick="switchView('home')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-        <polyline points="9 22 9 12 15 12 15 22"/>
-      </svg>
-      <span>오늘</span>
-    </button>
-    <button class="nav-btn" id="nav-cal" onclick="switchView('cal')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="3" y="4" width="18" height="18" rx="2"/>
-        <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
-        <line x1="3" y1="10" x2="21" y2="10"/>
-      </svg>
-      <span>달력</span>
-    </button>
-  </nav>
+    const toDateStr = (date) => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    };
 
-  <!-- Toast -->
-  <div class="toast" id="toast"></div>
+    const formatKoDate = (value) => {
+      const [year, month, day] = value.split("-").map(Number);
+      return `${year}년 ${month}월 ${day}일`;
+    };
 
-</div><!-- /app -->
+    const escapeHtml = (value = "") => value
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/\n/g, "<br>");
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import {
-  getFirestore, doc, getDoc, setDoc, deleteDoc,
-  collection, query, orderBy, getDocs, where
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    const formatDateTime = (value) => {
+      if (!value) return "저장 기록 없음";
+      const date = new Date(value);
+      return `${date.getMonth() + 1}월 ${date.getDate()}일 ${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+    };
 
-/* ── Firebase ── */
-const db = getFirestore(initializeApp({
-  apiKey:            "AIzaSyBHxd2JnEl-EuMWZGSHfaSKJtZ5Lsg24Dg",
-  authDomain:        "daily-dairy-c6e5a.firebaseapp.com",
-  projectId:         "daily-dairy-c6e5a",
-  storageBucket:     "daily-dairy-c6e5a.firebasestorage.app",
-  messagingSenderId: "888823431115",
-  appId:             "1:888823431115:web:e1d429ca9b7aae0e56804e"
-}));
-const COL = "entries";
+    const getIntensityLabel = (value) => ["아주 약함", "약함", "보통", "강함", "매우 강함"][value - 1] || "보통";
 
-/* ── Helpers ── */
-const toStr = d => {
-  const y = d.getFullYear(), m = String(d.getMonth()+1).padStart(2,'0'), day = String(d.getDate()).padStart(2,'0');
-  return `${y}-${m}-${day}`;
-};
-const shortKo = s => {
-  const [y,m,d] = s.split('-').map(Number);
-  return `${y}년 ${m}월 ${d}일`;
-};
-const escHtml = s => s ? s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>') : '';
+    const migrateEntry = (date, entry) => {
+      if (!entry) return null;
+      if (Array.isArray(entry.items)) {
+        return {
+          id: entry.id || date,
+          date,
+          items: entry.items.filter(Boolean),
+          emotions: Array.isArray(entry.emotions) ? entry.emotions.filter(Boolean) : [],
+          intensity: entry.intensity || 3,
+          createdAt: entry.createdAt || entry.updatedAt || new Date().toISOString(),
+          updatedAt: entry.updatedAt || entry.createdAt || new Date().toISOString()
+        };
+      }
 
-/* ── State ── */
-let curDate = toStr(new Date());
-let calY = new Date().getFullYear(), calM = new Date().getMonth();
+      const items = [entry.item1, entry.item2, entry.item3].filter(Boolean);
+      return {
+        id: date,
+        date,
+        items,
+        emotions: Array.isArray(entry.emotions) ? entry.emotions.filter(Boolean) : [],
+        intensity: entry.intensity || 3,
+        createdAt: entry.createdAt || entry.updatedAt || new Date().toISOString(),
+        updatedAt: entry.updatedAt || entry.createdAt || new Date().toISOString()
+      };
+    };
 
-/* ── Header date ── */
-(() => {
-  const now = new Date();
-  const days = ['일','월','화','수','목','금','토'];
-  document.getElementById('hdr-date').textContent =
-    `${now.getMonth()+1}월 ${now.getDate()}일 ${days[now.getDay()]}요일`;
-})();
+    const loadEntries = () => {
+      const current = localStorage.getItem(ENTRY_KEY);
+      const legacy = localStorage.getItem(LEGACY_ENTRY_KEY);
+      const raw = current || legacy;
+      if (!raw) return {};
 
-/* ── Date input ── */
-const dateEl = document.getElementById('date-input');
-dateEl.value = curDate;
-dateEl.max = toStr(new Date());
-dateEl.addEventListener('change', () => { curDate = dateEl.value; loadMem(curDate); });
+      try {
+        const parsed = JSON.parse(raw);
+        const migrated = {};
+        Object.entries(parsed).forEach(([date, entry]) => {
+          const normalized = migrateEntry(date, entry);
+          if (normalized) migrated[date] = normalized;
+        });
+        return migrated;
+      } catch {
+        return {};
+      }
+    };
 
-/* ── Theme ── */
-const html = document.documentElement;
-const theme = localStorage.getItem('theme') || 'dark';
-html.setAttribute('data-theme', theme);
-setThemeIcon(theme);
+    const loadDrafts = () => {
+      try {
+        return JSON.parse(localStorage.getItem(DRAFT_KEY) || "{}");
+      } catch {
+        return {};
+      }
+    };
 
-document.getElementById('theme-btn').addEventListener('click', () => {
-  const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-  html.setAttribute('data-theme', next);
-  localStorage.setItem('theme', next);
-  setThemeIcon(next);
-});
-function setThemeIcon(t) {
-  document.getElementById('ico-sun').style.display  = t === 'dark'  ? 'block' : 'none';
-  document.getElementById('ico-moon').style.display = t === 'light' ? 'block' : 'none';
-}
+    const persistEntries = () => {
+      localStorage.setItem(ENTRY_KEY, JSON.stringify(entries));
+    };
 
-/* ── Firestore ── */
-async function getEntry(d)  {
-  const s = await getDoc(doc(db, COL, d));
-  return s.exists() ? s.data() : null;
-}
-async function saveEntry(data) {
-  const now = new Date().toISOString();
-  const ref = doc(db, COL, data.date);
-  const s = await getDoc(ref);
-  await setDoc(ref, { ...data, created_at: s.exists() ? s.data().created_at : now, updated_at: now });
-}
-async function delEntry(d) { await deleteDoc(doc(db, COL, d)); }
+    const persistDrafts = () => {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(drafts));
+    };
 
-async function getMems(dateStr) {
-  const [y,m,d] = dateStr.split('-').map(Number);
-  const q = query(collection(db, COL), orderBy('date'));
-  const snap = await getDocs(q);
-  let earliest = y;
-  snap.forEach(doc => { const yr = parseInt(doc.id); if (yr < earliest) earliest = yr; });
-  const out = [];
-  for (let i = 1; i <= y - earliest; i++) {
-    const past = `${y-i}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const found = snap.docs.find(dc => dc.id === past);
-    if (found) out.push({ ago: i, date: past, entry: found.data() });
-  }
-  return out;
-}
+    const countStreak = () => {
+      const dates = Object.keys(entries).sort((a, b) => b.localeCompare(a));
+      if (!dates.length) return 0;
+      let streak = 0;
+      let cursor = new Date();
+      while (true) {
+        const key = toDateStr(cursor);
+        if (entries[key]) {
+          streak += 1;
+          cursor.setDate(cursor.getDate() - 1);
+        } else {
+          break;
+        }
+      }
+      return streak;
+    };
 
-async function getMonthDays(year, month) {
-  const pre = `${year}-${String(month+1).padStart(2,'0')}`;
-  const q = query(collection(db, COL), where('date','>=',`${pre}-01`), where('date','<=',`${pre}-31`), orderBy('date'));
-  const snap = await getDocs(q);
-  return new Set(snap.docs.map(d => parseInt(d.id.split('-')[2])));
-}
+    const entriesToArray = () => Object.values(entries).sort((a, b) => b.date.localeCompare(a.date));
 
-/* ── Toast ── */
-function toast(msg) {
-  const el = document.getElementById('toast');
-  el.textContent = msg; el.classList.add('show');
-  setTimeout(() => el.classList.remove('show'), 2600);
-}
+    const getTopEmotion = (items) => {
+      const counts = {};
+      items.forEach((entry) => {
+        (entry.emotions || []).forEach((emotion) => {
+          counts[emotion] = (counts[emotion] || 0) + 1;
+        });
+      });
+      const [emotion] = Object.entries(counts).sort((a, b) => b[1] - a[1])[0] || [];
+      return emotion || "아직 없음";
+    };
 
-/* ── Load Memories ── */
-async function loadMem(dateStr) {
-  const sk = document.getElementById('sk-loader');
-  const content = document.getElementById('mem-content');
-  sk.style.display = 'block'; content.innerHTML = '';
+    const tokenize = (items) => {
+      const counts = {};
+      items.forEach((entry) => {
+        entry.items.forEach((text) => {
+          text
+            .toLowerCase()
+            .replace(/[^0-9a-zA-Z가-힣\s]/g, " ")
+            .split(/\s+/)
+            .filter((token) => token.length >= 2 && !STOP_WORDS.has(token))
+            .forEach((token) => {
+              counts[token] = (counts[token] || 0) + 1;
+            });
+        });
+      });
+      return counts;
+    };
 
-  const [today, mems] = await Promise.all([getEntry(dateStr), getMems(dateStr)]);
-  sk.style.display = 'none';
+    const topKeywords = (items, limit = 6) =>
+      Object.entries(tokenize(items))
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, limit)
+        .map(([word, count]) => ({ word, count }));
 
-  // populate form
-  document.getElementById('item1').value = today?.item1 || '';
-  document.getElementById('item2').value = today?.item2 || '';
-  document.getElementById('item3').value = today?.item3 || '';
+    let entries = loadEntries();
+    let drafts = loadDrafts();
+    let currentDate = toDateStr(new Date());
+    let currentView = "home";
+    let calendarYear = new Date().getFullYear();
+    let calendarMonth = new Date().getMonth();
+    let draftItems = ["", "", ""];
+    let selectedEmotions = [];
+    let emotionIntensity = 3;
 
-  let html = '';
+    const dateInput = document.getElementById("date-input");
+    const fieldsEl = document.getElementById("fields");
+    const emotionGridEl = document.getElementById("emotion-grid");
+    const intensityEl = document.getElementById("emotion-intensity");
+    const intensityLabelEl = document.getElementById("emotion-intensity-label");
+    const saveStatusEl = document.getElementById("save-status");
+    const saveBtn = document.getElementById("save-btn");
+    const saveLabel = document.getElementById("save-label");
+    const quickStatsEl = document.getElementById("quick-stats");
+    const todayPanelEl = document.getElementById("today-panel");
+    const anniversaryPanelEl = document.getElementById("anniversary-panel");
+    const randomPanelEl = document.getElementById("random-panel");
+    const searchResultsEl = document.getElementById("search-results");
+    const searchQueryEl = document.getElementById("search-query");
+    const searchFromEl = document.getElementById("search-from");
+    const searchToEl = document.getElementById("search-to");
+    const searchEmotionEl = document.getElementById("search-emotion");
+    const summaryRangeEl = document.getElementById("summary-range");
+    const summaryFromEl = document.getElementById("summary-from");
+    const summaryToEl = document.getElementById("summary-to");
+    const summaryTopEl = document.getElementById("summary-top");
+    const summaryDetailEl = document.getElementById("summary-detail");
+    const settingsStatusEl = document.getElementById("settings-status");
+    const entryModalEl = document.getElementById("entry-modal");
+    const modalTitleEl = document.getElementById("modal-title");
+    const modalBodyEl = document.getElementById("modal-body");
 
-  // Today card
-  if (today) {
-    const items = [today.item1, today.item2, today.item3].filter(Boolean);
-    html += `
-      <div class="entry-card" style="animation-delay:0ms">
-        <div class="entry-header">
-          <div class="entry-meta">
-            <span class="badge badge-today">오늘</span>
-            <span class="entry-date-str">${shortKo(dateStr)}</span>
+    const toast = (message) => {
+      const el = document.getElementById("toast");
+      el.textContent = message;
+      el.classList.add("show");
+      window.clearTimeout(toast.timer);
+      toast.timer = window.setTimeout(() => el.classList.remove("show"), 2500);
+    };
+
+    const setHeaderDate = () => {
+      const now = new Date();
+      const days = ["일", "월", "화", "수", "목", "금", "토"];
+      document.getElementById("hdr-date").textContent =
+        `${now.getMonth() + 1}월 ${now.getDate()}일 ${days[now.getDay()]}요일`;
+    };
+
+    const setThemeIcon = (theme) => {
+      document.getElementById("ico-sun").style.display = theme === "dark" ? "block" : "none";
+      document.getElementById("ico-moon").style.display = theme === "light" ? "block" : "none";
+    };
+
+    const applyTheme = (theme) => {
+      document.documentElement.setAttribute("data-theme", theme);
+      localStorage.setItem(THEME_KEY, theme);
+      setThemeIcon(theme);
+    };
+
+    const setSaveStatus = (text) => {
+      saveStatusEl.textContent = text;
+    };
+
+    const saveDraft = () => {
+      const items = draftItems.map((item) => item.trim()).filter(Boolean);
+      const hasContent = items.length || selectedEmotions.length;
+      if (!hasContent) {
+        delete drafts[currentDate];
+        persistDrafts();
+        return;
+      }
+
+      drafts[currentDate] = {
+        date: currentDate,
+        items,
+        emotions: [...selectedEmotions],
+        intensity: emotionIntensity,
+        updatedAt: new Date().toISOString()
+      };
+      persistDrafts();
+    };
+
+    const syncEmotionIntensityLabel = () => {
+      intensityLabelEl.textContent = `${emotionIntensity} / 5`;
+      intensityLabelEl.title = getIntensityLabel(emotionIntensity);
+    };
+
+    const ensureMinFields = () => {
+      if (!draftItems.length) draftItems = [""];
+    };
+
+    const renderFields = () => {
+      ensureMinFields();
+      fieldsEl.innerHTML = draftItems.map((value, index) => `
+        <div class="item-field">
+          <div class="field-head">
+            <div class="field-label"><span class="field-num">${index + 1}</span> ${index + 1}번째 기억</div>
+            <button class="mini-btn" type="button" data-remove-index="${index}" ${draftItems.length === 1 ? "disabled" : ""}>삭제</button>
           </div>
-          <button class="del-btn" data-del="${dateStr}" title="삭제">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-              <polyline points="3 6 5 6 21 6"/>
-              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
-            </svg>
-          </button>
+          <textarea class="mem-input" data-item-index="${index}" rows="3" placeholder="${FIELD_PLACEHOLDERS[index] || "오늘 떠오른 기억을 적어보세요"}">${value}</textarea>
         </div>
-        <div class="entry-body">
-          ${items.map((t,i) => `
-            <div class="entry-row">
-              <span class="entry-n">${i+1}</span>
-              <p class="entry-text">${escHtml(t)}</p>
-            </div>`).join('')}
-        </div>
-      </div>`;
-  } else {
-    html += `
-      <div class="card" style="animation:fadeUp .35s ease both">
-        <div class="empty">
-          <div class="empty-ico">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
-              <path d="M12 20h9"/>
-              <path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/>
-            </svg>
-          </div>
-          <div class="empty-title">아직 기록이 없어요</div>
-          <div class="empty-desc">오늘의 소중한 기억을<br>왼쪽에 적어보세요 ✍️</div>
-        </div>
-      </div>`;
-  }
+      `).join("");
 
-  // Past memories
-  if (mems.length > 0) {
-    mems.forEach((mem, idx) => {
-      const items = [mem.entry.item1, mem.entry.item2, mem.entry.item3].filter(Boolean);
-      html += `
-        <div class="entry-card past-card" style="animation-delay:${(idx+1)*70}ms">
+      fieldsEl.querySelectorAll("[data-item-index]").forEach((el) => {
+        el.addEventListener("input", (event) => {
+          draftItems[Number(event.target.dataset.itemIndex)] = event.target.value;
+          saveDraft();
+          setSaveStatus("작성 중입니다. 저장해 주세요.");
+        });
+      });
+
+      fieldsEl.querySelectorAll("[data-remove-index]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const index = Number(btn.dataset.removeIndex);
+          if (draftItems.length === 1) return;
+          draftItems.splice(index, 1);
+          renderFields();
+          saveDraft();
+          setSaveStatus("항목 구성이 변경되었습니다.");
+        });
+      });
+    };
+
+    const renderEmotionGrid = () => {
+      emotionGridEl.innerHTML = EMOTIONS.map((emotion) => `
+        <button class="emotion-chip ${selectedEmotions.includes(emotion) ? "active" : ""}" data-emotion="${emotion}" type="button">${emotion}</button>
+      `).join("");
+
+      emotionGridEl.querySelectorAll("[data-emotion]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const emotion = btn.dataset.emotion;
+          if (selectedEmotions.includes(emotion)) {
+            selectedEmotions = selectedEmotions.filter((item) => item !== emotion);
+          } else {
+            selectedEmotions = [...selectedEmotions, emotion];
+          }
+          renderEmotionGrid();
+          saveDraft();
+          setSaveStatus("감정 선택이 변경되었습니다.");
+        });
+      });
+    };
+
+    const fillForm = (entry) => {
+      const draft = drafts[currentDate];
+      const source = draft || entry;
+      draftItems = source?.items?.length ? [...source.items] : ["", "", ""];
+      selectedEmotions = source?.emotions ? [...source.emotions] : [];
+      emotionIntensity = source?.intensity || 3;
+      intensityEl.value = String(emotionIntensity);
+      renderFields();
+      renderEmotionGrid();
+      syncEmotionIntensityLabel();
+      if (draft && !entry) {
+        setSaveStatus(`임시 초안 복원됨: ${formatDateTime(draft.updatedAt)}`);
+      } else if (draft && entry) {
+        setSaveStatus(`임시 초안 있음: ${formatDateTime(draft.updatedAt)}`);
+      } else {
+        setSaveStatus(entry?.updatedAt ? `마지막 저장: ${formatDateTime(entry.updatedAt)}` : "아직 저장되지 않았습니다.");
+      }
+    };
+
+    const renderQuickStats = () => {
+      const list = entriesToArray();
+      quickStatsEl.innerHTML = `
+        <div class="stat-chip">
+          <strong>${list.length}</strong>
+          <span>전체 기록 수</span>
+        </div>
+        <div class="stat-chip">
+          <strong>${countStreak()}일</strong>
+          <span>현재 연속 기록</span>
+        </div>
+        <div class="stat-chip">
+          <strong>${getTopEmotion(list)}</strong>
+          <span>가장 자주 느낀 감정</span>
+        </div>
+      `;
+    };
+
+    const renderEntryCard = (entry, options = {}) => {
+      const { titleBadge = "오늘", badgeClass = "badge-today", deletable = false, subtitle = formatKoDate(entry.date) } = options;
+      return `
+        <div class="entry-card">
           <div class="entry-header">
-            <div class="entry-meta">
-              <span class="badge badge-past">${mem.ago}년 전 오늘</span>
-              <span class="entry-date-str">${shortKo(mem.date)}</span>
+            <div>
+              <div class="entry-meta">
+                <span class="badge ${badgeClass}">${titleBadge}</span>
+                <span class="entry-date-str">${subtitle}</span>
+                ${(entry.emotions || []).map((emotion) => `<span class="badge badge-emo">${emotion}</span>`).join("")}
+              </div>
             </div>
+            ${deletable ? `
+              <button class="del-btn" type="button" data-delete="${entry.date}" title="삭제">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path>
+                </svg>
+              </button>
+            ` : ""}
           </div>
           <div class="entry-body">
-            ${items.map((t,i) => `
+            ${entry.items.map((text, index) => `
               <div class="entry-row">
-                <span class="entry-n">${i+1}</span>
-                <p class="entry-text">${escHtml(t)}</p>
-              </div>`).join('')}
+                <span class="entry-n">${index + 1}</span>
+                <p class="entry-text">${escapeHtml(text)}</p>
+              </div>
+            `).join("")}
           </div>
-        </div>`;
-    });
-  } else if (today) {
-    html += `
-      <div class="card" style="animation:fadeUp .35s ease .18s both">
-        <div class="empty" style="padding:22px 20px">
-          <span style="font-size:1.8rem">⏳</span>
-          <div class="empty-title" style="margin-top:4px">과거 기록이 쌓이면</div>
-          <div class="empty-desc">꾸준히 작성하면 1년 후, 2년 후…<br>소중한 추억을 되새길 수 있어요</div>
+          <div class="entry-footer">
+            <span class="tag-chip">감정 강도 ${entry.intensity || 3}/5</span>
+            <span class="tag-chip">업데이트 ${formatDateTime(entry.updatedAt)}</span>
+          </div>
         </div>
-      </div>`;
-  }
+      `;
+    };
 
-  content.innerHTML = html;
+    const openEntryModal = (entry, title = "기록 상세") => {
+      modalTitleEl.textContent = title;
+      modalBodyEl.innerHTML = renderEntryCard(entry, {
+        titleBadge: "기록 상세",
+        badgeClass: "badge-past",
+        subtitle: formatKoDate(entry.date)
+      });
+      entryModalEl.classList.add("open");
+    };
 
-  // Delete handlers
-  content.querySelectorAll('[data-del]').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      if (!confirm('이 일기를 삭제하시겠습니까?')) return;
-      try { await delEntry(btn.dataset.del); toast('삭제되었어요'); loadMem(curDate); }
-      catch { toast('삭제 중 오류가 발생했어요'); }
+    const closeEntryModal = () => {
+      entryModalEl.classList.remove("open");
+    };
+
+    const bindTodayDelete = () => {
+      todayPanelEl.querySelectorAll("[data-delete]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          if (!window.confirm("이 일기를 삭제하시겠습니까?")) return;
+          delete entries[btn.dataset.delete];
+          persistEntries();
+          delete drafts[btn.dataset.delete];
+          persistDrafts();
+          fillForm(null);
+          renderAll();
+          toast("삭제되었어요");
+        });
+      });
+    };
+
+    const getSameDayPastEntries = (dateStr) => {
+      const [year, month, day] = dateStr.split("-").map(Number);
+      return entriesToArray().filter((entry) => {
+        const [entryYear, entryMonth, entryDay] = entry.date.split("-").map(Number);
+        return entryYear < year && entryMonth === month && entryDay === day;
+      });
+    };
+
+    const renderTodayPanels = () => {
+      const todayEntry = entries[currentDate];
+      const pastEntries = getSameDayPastEntries(currentDate);
+
+      if (todayEntry) {
+        todayPanelEl.innerHTML = `
+          <div class="section-label">오늘 기록</div>
+          ${renderEntryCard(todayEntry, { deletable: true, titleBadge: "오늘", badgeClass: "badge-today" })}
+        `;
+      } else {
+        todayPanelEl.innerHTML = `
+          <div class="section-label">오늘 기록</div>
+          <div class="empty">
+            <div class="empty-ico">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <path d="M12 20h9"></path>
+                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"></path>
+              </svg>
+            </div>
+            <div class="empty-title">오늘 기록이 아직 없습니다</div>
+            <div class="empty-desc">기억 한 줄만 적어도 저장할 수 있습니다.</div>
+          </div>
+        `;
+      }
+
+      if (pastEntries.length) {
+        anniversaryPanelEl.innerHTML = `
+          <div class="section-label">같은 날의 기록</div>
+          <div class="stack">
+            ${pastEntries.slice(0, 3).map((entry) => {
+              const ago = new Date(currentDate).getFullYear() - new Date(entry.date).getFullYear();
+              return renderEntryCard(entry, {
+                titleBadge: `${ago}년 전 오늘`,
+                badgeClass: "badge-past"
+              });
+            }).join("")}
+          </div>
+        `;
+      } else {
+        anniversaryPanelEl.innerHTML = `
+          <div class="section-label">같은 날의 기록</div>
+          <div class="empty">
+            <div class="empty-ico">⏳</div>
+            <div class="empty-title">아직 같은 날의 회고가 없습니다</div>
+            <div class="empty-desc">꾸준히 기록하면 시간이 지난 뒤 같은 날짜를 다시 만날 수 있습니다.</div>
+          </div>
+        `;
+      }
+
+      bindTodayDelete();
+    };
+
+    const highlightText = (text, query) => {
+      if (!query) return escapeHtml(text);
+      const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      return escapeHtml(text).replace(new RegExp(escapedQuery, "gi"), (match) => `<mark>${match}</mark>`);
+    };
+
+    const getFilteredEntries = () => {
+      const query = searchQueryEl.value.trim().toLowerCase();
+      const from = searchFromEl.value;
+      const to = searchToEl.value;
+      const emotion = searchEmotionEl.value;
+
+      return entriesToArray().filter((entry) => {
+        if (from && entry.date < from) return false;
+        if (to && entry.date > to) return false;
+        if (emotion && !(entry.emotions || []).includes(emotion)) return false;
+        if (!query) return true;
+        return entry.items.some((item) => item.toLowerCase().includes(query));
+      });
+    };
+
+    const renderSearchResults = () => {
+      const query = searchQueryEl.value.trim();
+      const results = getFilteredEntries();
+
+      if (!results.length) {
+        searchResultsEl.innerHTML = `
+          <div class="empty">
+            <div class="empty-ico">🔎</div>
+            <div class="empty-title">조건에 맞는 기록이 없습니다</div>
+            <div class="empty-desc">검색어를 줄이거나 날짜/감정 필터를 조정해보세요.</div>
+          </div>
+        `;
+        return;
+      }
+
+      searchResultsEl.innerHTML = results.map((entry) => `
+        <div class="result-card">
+          <h4>${formatKoDate(entry.date)}</h4>
+          <p>${entry.items.map((item) => highlightText(item, query)).join("<br><br>")}</p>
+          <div class="entry-footer" style="padding:12px 0 0">
+            ${(entry.emotions || []).map((emotion) => `<span class="tag-chip">${emotion}</span>`).join("")}
+            <span class="tag-chip">강도 ${entry.intensity}/5</span>
+          </div>
+          <div class="result-actions">
+            <button class="ghost-btn" type="button" data-open-entry="${entry.date}">상세 보기</button>
+          </div>
+        </div>
+      `).join("");
+
+      searchResultsEl.querySelectorAll("[data-open-entry]").forEach((button) => {
+        button.addEventListener("click", () => {
+          const entry = entries[button.dataset.openEntry];
+          if (entry) openEntryModal(entry, formatKoDate(entry.date));
+        });
+      });
+    };
+
+    const renderRandomEntry = (entry) => {
+      if (!entry) {
+        randomPanelEl.innerHTML = `
+          <div class="section-label">랜덤 회고</div>
+          <div class="empty">
+            <div class="empty-ico">🎲</div>
+            <div class="empty-title">아직 랜덤으로 볼 기록이 없습니다</div>
+            <div class="empty-desc">첫 기록을 남기면 무작위 회고가 가능해집니다.</div>
+          </div>
+        `;
+        return;
+      }
+
+      randomPanelEl.innerHTML = `
+        <div class="section-label">랜덤 회고</div>
+        ${renderEntryCard(entry, {
+          titleBadge: "랜덤 기록",
+          badgeClass: "badge-past"
+        })}
+        <div class="result-actions">
+          <button class="ghost-btn" id="random-detail-btn" type="button">원문 자세히 보기</button>
+        </div>
+      `;
+
+      document.getElementById("random-detail-btn").addEventListener("click", () => {
+        openEntryModal(entry, `랜덤 회고 · ${formatKoDate(entry.date)}`);
+      });
+    };
+
+    const pickRandomEntry = () => {
+      const candidates = getFilteredEntries();
+      if (!candidates.length) {
+        renderRandomEntry(null);
+        toast("랜덤으로 뽑을 기록이 없습니다");
+        return;
+      }
+      const entry = candidates[Math.floor(Math.random() * candidates.length)];
+      renderRandomEntry(entry);
+    };
+
+    const getSummaryEntries = () => {
+      const range = summaryRangeEl.value;
+      const today = new Date();
+      let from = summaryFromEl.value;
+      let to = summaryToEl.value;
+
+      if (range !== "custom") {
+        const start = new Date(today);
+        start.setDate(today.getDate() - (Number(range) - 1));
+        from = toDateStr(start);
+        to = toDateStr(today);
+        summaryFromEl.value = from;
+        summaryToEl.value = to;
+      }
+
+      return entriesToArray().filter((entry) => {
+        if (from && entry.date < from) return false;
+        if (to && entry.date > to) return false;
+        return true;
+      });
+    };
+
+    const renderSummary = () => {
+      const list = getSummaryEntries();
+      const topEmotion = getTopEmotion(list);
+      const keywords = topKeywords(list);
+      const emotionCounts = {};
+      list.forEach((entry) => {
+        (entry.emotions || []).forEach((emotion) => {
+          emotionCounts[emotion] = (emotionCounts[emotion] || 0) + 1;
+        });
+      });
+      const maxEmotionCount = Math.max(...Object.values(emotionCounts), 1);
+      const totalItems = list.reduce((sum, entry) => sum + entry.items.length, 0);
+      const averageIntensity = list.length
+        ? (list.reduce((sum, entry) => sum + (entry.intensity || 0), 0) / list.length).toFixed(1)
+        : "0.0";
+      const representativeQuotes = list
+        .flatMap((entry) => entry.items.map((text) => ({ date: entry.date, text })))
+        .slice(0, 3);
+
+      summaryTopEl.innerHTML = `
+        <div class="summary-metric">
+          <span>기록 수</span>
+          <strong>${list.length}</strong>
+        </div>
+        <div class="summary-metric">
+          <span>총 기억 항목</span>
+          <strong>${totalItems}</strong>
+        </div>
+        <div class="summary-metric">
+          <span>평균 감정 강도</span>
+          <strong>${averageIntensity}</strong>
+        </div>
+      `;
+
+      summaryDetailEl.innerHTML = `
+        <div class="summary-section">
+          <h4>가장 많이 등장한 감정</h4>
+          <div class="summary-list">
+            <span class="tag-chip">${topEmotion}</span>
+            ${list.length ? `<span class="tag-chip">분석 기간 ${summaryFromEl.value} ~ ${summaryToEl.value}</span>` : ""}
+          </div>
+        </div>
+        <div class="summary-section">
+          <h4>자주 나온 단어</h4>
+          <div class="summary-list">
+            ${keywords.length ? keywords.map((item) => `<span class="tag-chip">${item.word} ${item.count}회</span>`).join("") : '<span class="tag-chip">아직 분석할 단어가 없습니다</span>'}
+          </div>
+        </div>
+        <div class="summary-section">
+          <h4>감정 분포</h4>
+          <div class="emotion-bars">
+            ${Object.keys(emotionCounts).length ? Object.entries(emotionCounts).sort((a, b) => b[1] - a[1]).map(([emotion, count]) => `
+              <div class="emotion-bar-row">
+                <span>${emotion}</span>
+                <div class="emotion-bar-track"><div class="emotion-bar-fill" style="width:${(count / maxEmotionCount) * 100}%"></div></div>
+                <strong>${count}</strong>
+              </div>
+            `).join("") : '<div class="quote-item">아직 감정 데이터가 부족합니다.</div>'}
+          </div>
+        </div>
+        <div class="summary-section">
+          <h4>대표 문장</h4>
+          <div class="quote-list">
+            ${representativeQuotes.length ? representativeQuotes.map((item) => `<div class="quote-item">${escapeHtml(item.text)}<br><small>${formatKoDate(item.date)}</small></div>`).join("") : '<div class="quote-item">선택한 기간의 기록이 없습니다.</div>'}
+          </div>
+        </div>
+      `;
+    };
+
+    const renderSettingsStatus = () => {
+      const entryCount = Object.keys(entries).length;
+      const draftCount = Object.keys(drafts).length;
+      const latestSaved = entriesToArray()[0]?.updatedAt;
+      const latestDraft = Object.values(drafts).sort((a, b) => (b.updatedAt || "").localeCompare(a.updatedAt || ""))[0]?.updatedAt;
+
+      settingsStatusEl.innerHTML = `
+        <div class="quote-item">저장된 기록 수: ${entryCount}개</div>
+        <div class="quote-item">임시 초안 수: ${draftCount}개</div>
+        <div class="quote-item">마지막 저장 기록: ${latestSaved ? formatDateTime(latestSaved) : "없음"}</div>
+        <div class="quote-item">마지막 임시 초안: ${latestDraft ? formatDateTime(latestDraft) : "없음"}</div>
+      `;
+    };
+
+    const renderCalendar = () => {
+      document.getElementById("cal-label").textContent = `${calendarYear}년 ${calendarMonth + 1}월`;
+      const firstDay = new Date(calendarYear, calendarMonth, 1).getDay();
+      const totalDays = new Date(calendarYear, calendarMonth + 1, 0).getDate();
+      const prevTotal = new Date(calendarYear, calendarMonth, 0).getDate();
+      const today = toDateStr(new Date());
+      const headers = ["일", "월", "화", "수", "목", "금", "토"];
+      const daysWithEntries = new Set(
+        Object.keys(entries)
+          .filter((date) => {
+            const [year, month] = date.split("-").map(Number);
+            return year === calendarYear && month === calendarMonth + 1;
+          })
+          .map((date) => Number(date.split("-")[2]))
+      );
+
+      let html = headers.map((day) => `<div class="cal-hdr">${day}</div>`).join("");
+
+      for (let i = firstDay - 1; i >= 0; i -= 1) {
+        html += `<div class="cal-day dim">${prevTotal - i}</div>`;
+      }
+
+      for (let day = 1; day <= totalDays; day += 1) {
+        const date = `${calendarYear}-${String(calendarMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+        const classes = ["cal-day", date === today ? "today" : "", daysWithEntries.has(day) ? "has-entry" : ""].filter(Boolean).join(" ");
+        html += `<button class="${classes}" type="button" data-cal-date="${date}">${day}</button>`;
+      }
+
+      const remainder = (firstDay + totalDays) % 7;
+      const fill = remainder === 0 ? 0 : 7 - remainder;
+      for (let day = 1; day <= fill; day += 1) {
+        html += `<div class="cal-day dim">${day}</div>`;
+      }
+
+      const grid = document.getElementById("cal-grid");
+      grid.innerHTML = html;
+      grid.querySelectorAll("[data-cal-date]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          currentDate = btn.dataset.calDate;
+          dateInput.value = currentDate;
+          fillForm(entries[currentDate] || null);
+          switchView("home");
+        });
+      });
+    };
+
+    const renderEmotionFilterOptions = () => {
+      searchEmotionEl.innerHTML = `<option value="">감정 전체</option>${EMOTIONS.map((emotion) => `<option value="${emotion}">${emotion}</option>`).join("")}`;
+    };
+
+    const renderAll = () => {
+      renderQuickStats();
+      renderTodayPanels();
+      renderSearchResults();
+      renderRandomEntry(entriesToArray()[0] || null);
+      renderCalendar();
+      renderSummary();
+      renderSettingsStatus();
+    };
+
+    const switchView = (view) => {
+      currentView = view;
+      document.querySelectorAll(".view").forEach((section) => {
+        section.classList.toggle("active", section.id === `view-${view}`);
+      });
+      document.querySelectorAll(".nav-btn").forEach((button) => {
+        button.classList.toggle("active", button.dataset.view === view);
+      });
+      if (view === "calendar") renderCalendar();
+      if (view === "explore") renderSearchResults();
+      if (view === "summary") renderSummary();
+      if (view === "settings") renderSettingsStatus();
+    };
+
+    dateInput.value = currentDate;
+    dateInput.max = toDateStr(new Date());
+    dateInput.addEventListener("change", () => {
+      currentDate = dateInput.value;
+      fillForm(entries[currentDate] || null);
+      renderTodayPanels();
     });
-  });
-}
 
-/* ── Save ── */
-document.getElementById('save-btn').addEventListener('click', async () => {
-  const [i1, i2, i3] = ['item1','item2','item3'].map(id => document.getElementById(id).value.trim());
-  if (!i1 && !i2 && !i3) { toast('최소 하나의 기억을 입력해주세요'); return; }
-  const btn = document.getElementById('save-btn');
-  const lbl = document.getElementById('save-label');
-  btn.disabled = true; lbl.innerHTML = '<span class="spin"></span>';
-  try {
-    await saveEntry({ date: curDate, item1: i1, item2: i2, item3: i3 });
-    toast('일기가 저장되었어요 ✓');
-    loadMem(curDate);
-  } catch { toast('저장 중 오류가 발생했어요'); }
-  finally { btn.disabled = false; lbl.textContent = '일기 저장하기'; }
-});
-
-/* ── Calendar ── */
-async function renderCal() {
-  document.getElementById('cal-label').textContent = `${calY}년 ${calM+1}월`;
-  const entryDays = await getMonthDays(calY, calM);
-  const todayStr  = toStr(new Date());
-  const firstDay  = new Date(calY, calM, 1).getDay();
-  const totalDays = new Date(calY, calM+1, 0).getDate();
-  const prevTotal = new Date(calY, calM, 0).getDate();
-  const HEADS     = ['일','월','화','수','목','금','토'];
-
-  let out = HEADS.map(h => `<div class="cal-hdr">${h}</div>`).join('');
-
-  for (let i = firstDay - 1; i >= 0; i--)
-    out += `<div class="cal-day dim">${prevTotal - i}</div>`;
-
-  for (let d = 1; d <= totalDays; d++) {
-    const ds = `${calY}-${String(calM+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const cls = ['cal-day', ds===todayStr?'today':'', entryDays.has(d)?'has-entry':''].filter(Boolean).join(' ');
-    out += `<div class="${cls}" data-ds="${ds}">${d}</div>`;
-  }
-
-  const total = firstDay + totalDays;
-  const fill  = total % 7 === 0 ? 0 : 7 - (total % 7);
-  for (let d = 1; d <= fill; d++) out += `<div class="cal-day dim">${d}</div>`;
-
-  const grid = document.getElementById('cal-grid');
-  grid.innerHTML = out;
-  grid.querySelectorAll('[data-ds]').forEach(el => {
-    el.addEventListener('click', () => {
-      curDate = el.dataset.ds;
-      dateEl.value = curDate;
-      switchView('home');
-      loadMem(curDate);
+    document.getElementById("add-item-btn").addEventListener("click", () => {
+      draftItems.push("");
+      renderFields();
+      saveDraft();
+      setSaveStatus("새 항목이 추가되었습니다.");
     });
-  });
-}
 
-document.getElementById('cal-prev').addEventListener('click', () => {
-  if (--calM < 0) { calM = 11; calY--; } renderCal();
-});
-document.getElementById('cal-next').addEventListener('click', () => {
-  if (++calM > 11) { calM = 0; calY++; } renderCal();
-});
+    intensityEl.addEventListener("input", (event) => {
+      emotionIntensity = Number(event.target.value);
+      syncEmotionIntensityLabel();
+      saveDraft();
+      setSaveStatus("감정 강도가 변경되었습니다.");
+    });
 
-/* ── View Switch ── */
-window.switchView = (v) => {
-  const home  = document.getElementById('home-view');
-  const cal   = document.getElementById('cal-wrapper');
-  const btnH  = document.getElementById('nav-home');
-  const btnC  = document.getElementById('nav-cal');
-  if (v === 'home') {
-    home.style.display = 'grid'; cal.style.display = 'none';
-    btnH.classList.add('active'); btnC.classList.remove('active');
-  } else {
-    home.style.display = 'none'; cal.style.display = 'block';
-    btnH.classList.remove('active'); btnC.classList.add('active');
-    renderCal();
-  }
-};
+    saveBtn.addEventListener("click", () => {
+      const items = draftItems.map((item) => item.trim()).filter(Boolean);
+      if (!items.length) {
+        toast("최소 하나의 기억을 입력해주세요");
+        return;
+      }
 
-/* ── Boot ── */
-loadMem(curDate);
-</script>
+      saveBtn.disabled = true;
+      saveLabel.innerHTML = '<span class="spin"></span>';
+
+      window.setTimeout(() => {
+        const existing = entries[currentDate];
+        entries[currentDate] = {
+          id: currentDate,
+          date: currentDate,
+          items,
+          emotions: [...selectedEmotions],
+          intensity: emotionIntensity,
+          createdAt: existing?.createdAt || new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+        persistEntries();
+        delete drafts[currentDate];
+        persistDrafts();
+        fillForm(entries[currentDate]);
+        renderAll();
+        saveBtn.disabled = false;
+        saveLabel.textContent = "일기 저장하기";
+        toast("일기가 저장되었어요");
+      }, 180);
+    });
+
+    document.getElementById("theme-btn").addEventListener("click", () => {
+      const next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
+      applyTheme(next);
+    });
+
+    document.querySelectorAll(".nav-btn").forEach((button) => {
+      button.addEventListener("click", () => switchView(button.dataset.view));
+    });
+
+    document.getElementById("random-entry-btn").addEventListener("click", pickRandomEntry);
+
+    [searchQueryEl, searchFromEl, searchToEl, searchEmotionEl].forEach((input) => {
+      input.addEventListener("input", renderSearchResults);
+      input.addEventListener("change", renderSearchResults);
+    });
+
+    summaryRangeEl.addEventListener("change", () => {
+      const isCustom = summaryRangeEl.value === "custom";
+      summaryFromEl.disabled = !isCustom;
+      summaryToEl.disabled = !isCustom;
+      renderSummary();
+    });
+
+    [summaryFromEl, summaryToEl].forEach((input) => {
+      input.addEventListener("change", () => {
+        if (summaryRangeEl.value === "custom") renderSummary();
+      });
+    });
+
+    document.getElementById("summary-refresh").addEventListener("click", renderSummary);
+
+    document.getElementById("export-json-btn").addEventListener("click", () => {
+      const blob = new Blob([JSON.stringify({ entries, drafts, exportedAt: new Date().toISOString() }, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `diary-backup-${toDateStr(new Date())}.json`;
+      anchor.click();
+      URL.revokeObjectURL(url);
+      toast("백업 파일을 내보냈어요");
+    });
+
+    document.getElementById("export-csv-btn").addEventListener("click", () => {
+      const rows = [["date", "items", "emotions", "intensity", "createdAt", "updatedAt"]];
+      entriesToArray().forEach((entry) => {
+        rows.push([
+          entry.date,
+          entry.items.join(" | "),
+          (entry.emotions || []).join(" | "),
+          String(entry.intensity || 3),
+          entry.createdAt || "",
+          entry.updatedAt || ""
+        ]);
+      });
+      const csv = rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, "\"\"")}"`).join(",")).join("\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `diary-backup-${toDateStr(new Date())}.csv`;
+      anchor.click();
+      URL.revokeObjectURL(url);
+      toast("CSV 파일을 내보냈어요");
+    });
+
+    document.getElementById("import-json-btn").addEventListener("click", () => {
+      document.getElementById("import-json-file").click();
+    });
+
+    document.getElementById("import-json-file").addEventListener("change", async (event) => {
+      const [file] = event.target.files || [];
+      if (!file) return;
+
+      try {
+        const text = await file.text();
+        const parsed = JSON.parse(text);
+        const importedEntries = {};
+        Object.entries(parsed.entries || {}).forEach(([date, entry]) => {
+          const normalized = migrateEntry(date, entry);
+          if (normalized) importedEntries[date] = normalized;
+        });
+        entries = importedEntries;
+        drafts = typeof parsed.drafts === "object" && parsed.drafts ? parsed.drafts : {};
+        persistEntries();
+        persistDrafts();
+        fillForm(entries[currentDate] || null);
+        renderAll();
+        toast("백업을 가져왔어요");
+      } catch {
+        toast("백업 파일을 읽지 못했어요");
+      } finally {
+        event.target.value = "";
+      }
+    });
+
+    document.getElementById("clear-data-btn").addEventListener("click", () => {
+      if (!window.confirm("저장된 기록과 임시 초안을 모두 삭제할까요?")) return;
+      entries = {};
+      drafts = {};
+      localStorage.removeItem(ENTRY_KEY);
+      localStorage.removeItem(DRAFT_KEY);
+      fillForm(null);
+      renderAll();
+      toast("로컬 데이터를 초기화했어요");
+    });
+
+    document.getElementById("modal-close-btn").addEventListener("click", closeEntryModal);
+    entryModalEl.addEventListener("click", (event) => {
+      if (event.target === entryModalEl) closeEntryModal();
+    });
+
+    document.getElementById("cal-prev").addEventListener("click", () => {
+      calendarMonth -= 1;
+      if (calendarMonth < 0) {
+        calendarMonth = 11;
+        calendarYear -= 1;
+      }
+      renderCalendar();
+    });
+
+    document.getElementById("cal-next").addEventListener("click", () => {
+      calendarMonth += 1;
+      if (calendarMonth > 11) {
+        calendarMonth = 0;
+        calendarYear += 1;
+      }
+      renderCalendar();
+    });
+
+    setHeaderDate();
+    renderEmotionFilterOptions();
+    applyTheme(localStorage.getItem(THEME_KEY) || "dark");
+    fillForm(entries[currentDate] || null);
+    summaryFromEl.disabled = true;
+    summaryToEl.disabled = true;
+    renderAll();
+  </script>
 </body>
 </html>
