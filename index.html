@@ -1064,6 +1064,7 @@
           <div class="card">
             <div class="section-label">데이터 관리</div>
             <div class="settings-actions">
+              <button class="solid-btn" id="import-firebase-btn" type="button">기존 Firebase 데이터 가져오기</button>
               <button class="solid-btn" id="export-json-btn" type="button">JSON 백업 내보내기</button>
               <button class="ghost-btn" id="export-csv-btn" type="button">CSV 내보내기</button>
               <button class="ghost-btn" id="import-json-btn" type="button">백업 파일 가져오기</button>
@@ -1153,6 +1154,16 @@
     const LEGACY_ENTRY_KEY = "diary-app-entries";
     const DRAFT_KEY = "diary-app-drafts-v1";
     const THEME_KEY = "diary-app-theme";
+    const FIREBASE_IMPORT_KEY = "diary-app-firebase-imported-v1";
+    const FIREBASE_CONFIG = {
+      apiKey: "AIzaSyBHxd2JnEl-EuMWZGSHfaSKJtZ5Lsg24Dg",
+      authDomain: "daily-dairy-c6e5a.firebaseapp.com",
+      projectId: "daily-dairy-c6e5a",
+      storageBucket: "daily-dairy-c6e5a.firebasestorage.app",
+      messagingSenderId: "888823431115",
+      appId: "1:888823431115:web:e1d429ca9b7aae0e56804e"
+    };
+    const FIREBASE_COLLECTION = "entries";
     const EMOTIONS = ["기쁨", "감사", "평온", "불안", "피곤", "슬픔", "성취감", "외로움"];
     const STOP_WORDS = new Set(["그리고", "하지만", "오늘", "정말", "조금", "너무", "그냥", "에서", "에게", "이제", "다시", "했다", "했다는", "했다가", "같다", "있다", "했다며", "위해"]);
     const FIELD_PLACEHOLDERS = [
@@ -1242,6 +1253,31 @@
       }
     };
 
+    let firebaseModuleCache;
+    let firebaseDbPromise;
+
+    const loadFirebaseModules = async () => {
+      if (firebaseModuleCache) return firebaseModuleCache;
+      const [{ initializeApp, getApp, getApps }, { getFirestore, collection, getDocs, orderBy, query, doc, setDoc, deleteDoc }] = await Promise.all([
+        import("https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"),
+        import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js")
+      ]);
+      firebaseModuleCache = { initializeApp, getApp, getApps, getFirestore, collection, getDocs, orderBy, query, doc, setDoc, deleteDoc };
+      return firebaseModuleCache;
+    };
+
+    const getFirebaseDb = async () => {
+      if (firebaseDbPromise) return firebaseDbPromise;
+      firebaseDbPromise = (async () => {
+        const { initializeApp, getApp, getApps, getFirestore } = await loadFirebaseModules();
+        const app = getApps().some((item) => item.name === "legacy-diary-import")
+          ? getApp("legacy-diary-import")
+          : initializeApp(FIREBASE_CONFIG, "legacy-diary-import");
+        return getFirestore(app);
+      })();
+      return firebaseDbPromise;
+    };
+
     const persistEntries = () => {
       localStorage.setItem(ENTRY_KEY, JSON.stringify(entries));
     };
@@ -1302,6 +1338,34 @@
         .sort((a, b) => b[1] - a[1])
         .slice(0, limit)
         .map(([word, count]) => ({ word, count }));
+
+    const mergeEntryMaps = (remoteEntries, localEntries) => {
+      const merged = { ...remoteEntries };
+      Object.entries(localEntries).forEach(([date, localEntry]) => {
+        const remoteEntry = merged[date];
+        if (!remoteEntry) {
+          merged[date] = localEntry;
+          return;
+        }
+
+        const localUpdated = new Date(localEntry.updatedAt || localEntry.createdAt || 0).getTime();
+        const remoteUpdated = new Date(remoteEntry.updatedAt || remoteEntry.createdAt || 0).getTime();
+        merged[date] = localUpdated >= remoteUpdated ? localEntry : remoteEntry;
+      });
+      return merged;
+    };
+
+    const toFirebaseEntry = (entry) => ({
+      date: entry.date,
+      item1: entry.items[0] || "",
+      item2: entry.items[1] || "",
+      item3: entry.items[2] || "",
+      items: entry.items,
+      emotions: entry.emotions || [],
+      intensity: entry.intensity || 3,
+      created_at: entry.createdAt,
+      updated_at: entry.updatedAt
+    });
 
     let entries = loadEntries();
     let drafts = loadDrafts();
@@ -1540,12 +1604,19 @@
 
     const bindTodayDelete = () => {
       todayPanelEl.querySelectorAll("[data-delete]").forEach((btn) => {
-        btn.addEventListener("click", () => {
+        btn.addEventListener("click", async () => {
           if (!window.confirm("이 일기를 삭제하시겠습니까?")) return;
-          delete entries[btn.dataset.delete];
+          const date = btn.dataset.delete;
+          delete entries[date];
           persistEntries();
-          delete drafts[btn.dataset.delete];
+          delete drafts[date];
           persistDrafts();
+          try {
+            await deleteEntryFromFirebase(date);
+          } catch (error) {
+            console.error(error);
+            toast("로컬에서는 삭제했지만 Firebase 삭제는 실패했어요");
+          }
           fillForm(null);
           renderAll();
           toast("삭제되었어요");
@@ -1807,13 +1878,55 @@
       const draftCount = Object.keys(drafts).length;
       const latestSaved = entriesToArray()[0]?.updatedAt;
       const latestDraft = Object.values(drafts).sort((a, b) => (b.updatedAt || "").localeCompare(a.updatedAt || ""))[0]?.updatedAt;
+      const importedFirebase = localStorage.getItem(FIREBASE_IMPORT_KEY) === "done";
 
       settingsStatusEl.innerHTML = `
         <div class="quote-item">저장된 기록 수: ${entryCount}개</div>
         <div class="quote-item">임시 초안 수: ${draftCount}개</div>
         <div class="quote-item">마지막 저장 기록: ${latestSaved ? formatDateTime(latestSaved) : "없음"}</div>
         <div class="quote-item">마지막 임시 초안: ${latestDraft ? formatDateTime(latestDraft) : "없음"}</div>
+        <div class="quote-item">Firebase 가져오기 상태: ${importedFirebase ? "완료" : "아직 안 함"}</div>
       `;
+    };
+
+    const importLegacyFirebaseEntries = async ({ silent = false } = {}) => {
+      try {
+        if (!silent) setSaveStatus("기존 Firebase 데이터를 가져오는 중입니다...");
+        const { collection, getDocs, orderBy, query } = await loadFirebaseModules();
+        const db = await getFirebaseDb();
+        const snapshot = await getDocs(query(collection(db, FIREBASE_COLLECTION), orderBy("date")));
+        const importedEntries = {};
+
+        snapshot.forEach((docSnap) => {
+          const normalized = migrateEntry(docSnap.id, docSnap.data());
+          if (normalized) importedEntries[docSnap.id] = normalized;
+        });
+
+        entries = mergeEntryMaps(importedEntries, entries);
+        persistEntries();
+        localStorage.setItem(FIREBASE_IMPORT_KEY, "done");
+        fillForm(entries[currentDate] || null);
+        renderAll();
+        if (!silent) toast(`${Object.keys(importedEntries).length}개의 Firebase 기록을 가져왔어요`);
+      } catch (error) {
+        console.error(error);
+        if (!silent) {
+          toast("Firebase 데이터를 가져오지 못했어요");
+          setSaveStatus("Firebase 가져오기에 실패했습니다.");
+        }
+      }
+    };
+
+    const syncEntryToFirebase = async (entry) => {
+      const { doc, setDoc } = await loadFirebaseModules();
+      const db = await getFirebaseDb();
+      await setDoc(doc(db, FIREBASE_COLLECTION, entry.date), toFirebaseEntry(entry));
+    };
+
+    const deleteEntryFromFirebase = async (date) => {
+      const { doc, deleteDoc } = await loadFirebaseModules();
+      const db = await getFirebaseDb();
+      await deleteDoc(doc(db, FIREBASE_COLLECTION, date));
     };
 
     const renderCalendar = () => {
@@ -1922,9 +2035,9 @@
       saveBtn.disabled = true;
       saveLabel.innerHTML = '<span class="spin"></span>';
 
-      window.setTimeout(() => {
+      window.setTimeout(async () => {
         const existing = entries[currentDate];
-        entries[currentDate] = {
+        const nextEntry = {
           id: currentDate,
           date: currentDate,
           items,
@@ -1933,14 +2046,23 @@
           createdAt: existing?.createdAt || new Date().toISOString(),
           updatedAt: new Date().toISOString()
         };
+        entries[currentDate] = nextEntry;
         persistEntries();
         delete drafts[currentDate];
         persistDrafts();
-        fillForm(entries[currentDate]);
-        renderAll();
-        saveBtn.disabled = false;
-        saveLabel.textContent = "일기 저장하기";
-        toast("일기가 저장되었어요");
+        try {
+          await syncEntryToFirebase(nextEntry);
+          localStorage.setItem(FIREBASE_IMPORT_KEY, "done");
+          toast("일기가 저장되었어요");
+        } catch (error) {
+          console.error(error);
+          toast("로컬에는 저장됐지만 Firebase 동기화는 실패했어요");
+        } finally {
+          fillForm(entries[currentDate]);
+          renderAll();
+          saveBtn.disabled = false;
+          saveLabel.textContent = "일기 저장하기";
+        }
       }, 180);
     });
 
@@ -1974,6 +2096,10 @@
     });
 
     document.getElementById("summary-refresh").addEventListener("click", renderSummary);
+
+    document.getElementById("import-firebase-btn").addEventListener("click", async () => {
+      await importLegacyFirebaseEntries();
+    });
 
     document.getElementById("export-json-btn").addEventListener("click", () => {
       const blob = new Blob([JSON.stringify({ entries, drafts, exportedAt: new Date().toISOString() }, null, 2)], { type: "application/json" });
@@ -2080,6 +2206,8 @@
     summaryFromEl.disabled = true;
     summaryToEl.disabled = true;
     renderAll();
+
+    importLegacyFirebaseEntries({ silent: true });
   </script>
 </body>
 </html>
