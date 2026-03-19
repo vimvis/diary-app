@@ -200,6 +200,8 @@ th {
 .button {
   padding: 14px 18px;
   font-size: 0.94rem;
+  border: 0;
+  cursor: pointer;
 }
 
 .button-primary {
@@ -212,8 +214,23 @@ th {
   background: rgba(255, 255, 255, 0.8);
 }
 
+.button:disabled {
+  opacity: 0.52;
+  cursor: not-allowed;
+}
+
+.button-block {
+  width: 100%;
+}
+
 .hero-metrics {
   align-content: start;
+}
+
+.hero-note {
+  margin-top: 16px;
+  color: var(--forest);
+  font-weight: 600;
 }
 
 .metric-card,
@@ -253,10 +270,56 @@ th {
 
 .watcher-stack,
 .timeline,
-.api-stack {
+.api-stack,
+.form-stack,
+.auth-summary {
   display: grid;
   gap: 14px;
   margin-top: 18px;
+}
+
+.toggle-row,
+.field {
+  display: grid;
+  gap: 10px;
+}
+
+.toggle-row {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.toggle-pill {
+  padding: 11px 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.62);
+  color: var(--muted);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.toggle-pill-active {
+  color: white;
+  background: var(--forest);
+  border-color: transparent;
+}
+
+.field {
+  color: var(--muted);
+  font-size: 0.93rem;
+  font-weight: 700;
+}
+
+.field input,
+.field select {
+  width: 100%;
+  padding: 13px 14px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.8);
+  color: var(--text);
+  font: inherit;
 }
 
 .status {
@@ -320,6 +383,11 @@ th {
   font-size: 0.78rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+
+.inline-link {
+  color: var(--brand-deep);
+  font-weight: 800;
 }
 
 @media (max-width: 980px) {

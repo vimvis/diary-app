@@ -140,6 +140,10 @@ export function findUserByEmail(email: string) {
   return users.find((user) => user.email.toLowerCase() === email.toLowerCase()) ?? null;
 }
 
+export function findUserById(userId: string) {
+  return users.find((user) => user.id === userId) ?? null;
+}
+
 export function getStoredPasswordHash(email: string) {
   return userPasswordHashes.get(email.toLowerCase()) ?? null;
 }
