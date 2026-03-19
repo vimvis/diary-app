@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HYROX Ticket Watch</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Noto+Sans+KR:wght@400;500;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #f2efe8;
+      --panel: rgba(255, 250, 242, 0.84);
+      --panel-strong: #fffaf0;
+      --line: rgba(31, 24, 16, 0.1);
+      --text: #201913;
+      --muted: #6c6258;
+      --brand: #ee6d33;
+      --brand-deep: #c44d19;
+      --accent: #173b30;
+      --good: #1e8f5c;
+      --warn: #c45f15;
+      --bad: #be3f33;
+      --shadow: 0 24px 60px rgba(57, 37, 14, 0.14);
+      --radius-xl: 30px;
+      --radius-lg: 22px;
+      --radius-md: 16px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      font-family: "Noto Sans KR", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(238, 109, 51, 0.18), transparent 26%),
+        radial-gradient(circle at right 20%, rgba(23, 59, 48, 0.16), transparent 24%),
+        linear-gradient(180deg, #f6f1e8 0%, #ece4d7 100%);
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .shell {
+      width: min(1200px, calc(100vw - 32px));
+      margin: 24px auto 40px;
+      padding: 18px;
+      border: 1px solid rgba(255, 255, 255, 0.55);
+      border-radius: 34px;
+      background: rgba(255, 248, 240, 0.58);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 12px 14px 20px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .brand-mark {
+      width: 48px;
+      height: 48px;
+      display: grid;
+      place-items: center;
+      border-radius: 16px;
+      background: linear-gradient(135deg, var(--brand) 0%, #ffb36b 100%);
+      color: #fff;
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 1.05rem;
+      font-weight: 700;
+    }
+
+    .brand h1,
+    .brand p,
+    .auth-card h2,
+    .hero h2,
+    .card h3,
+    .pill,
+    .button,
+    th {
+      margin: 0;
+    }
+
+    .brand h1,
+    .hero h2,
+    .auth-card h2,
+    .card h3 {
+      font-family: "Space Grotesk", "Noto Sans KR", sans-serif;
+      letter-spacing: -0.03em;
+    }
+
+    .brand h1 {
+      font-size: 1.15rem;
+    }
+
+    .brand p,
+    .meta,
+    .helper,
+    .status-note {
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .topbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .pill {
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.72);
+      font-size: 0.88rem;
+      font-weight: 700;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 360px minmax(0, 1fr);
+      gap: 18px;
+    }
+
+    .auth-card,
+    .hero,
+    .card {
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      border-radius: var(--radius-xl);
+      background: var(--panel);
+      backdrop-filter: blur(16px);
+    }
+
+    .auth-card {
+      padding: 24px;
+      position: sticky;
+      top: 18px;
+      align-self: start;
+    }
+
+    .hero {
+      padding: 30px;
+      overflow: hidden;
+      position: relative;
+      background:
+        linear-gradient(135deg, rgba(238, 109, 51, 0.14), rgba(255, 250, 242, 0.88)),
+        var(--panel);
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      width: 220px;
+      height: 220px;
+      right: -30px;
+      top: -40px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.5), transparent 68%);
+    }
+
+    .hero h2 {
+      max-width: 660px;
+      font-size: clamp(1.8rem, 4vw, 2.9rem);
+      line-height: 1.02;
+      margin-bottom: 14px;
+    }
+
+    .hero p {
+      max-width: 620px;
+      margin: 0;
+      color: #45392f;
+      line-height: 1.7;
+    }
+
+    .hero-grid,
+    .cards,
+    .metrics {
+      display: grid;
+      gap: 16px;
+    }
+
+    .hero-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      margin-top: 22px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .metric {
+      padding: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.55);
+      border-radius: 20px;
+      background: rgba(255, 250, 244, 0.74);
+    }
+
+    .metric strong {
+      display: block;
+      font-size: 1.3rem;
+      margin-bottom: 5px;
+    }
+
+    .cards {
+      margin-top: 18px;
+      grid-template-columns: 1.25fr 1fr;
+    }
+
+    .card {
+      padding: 22px;
+    }
+
+    .card h3 {
+      font-size: 1.18rem;
+      margin-bottom: 6px;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .tag-row,
+    .watcher-tags,
+    .actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .tag,
+    .status,
+    .tiny {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 800;
+    }
+
+    .tag,
+    .tiny {
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.68);
+    }
+
+    .status {
+      padding: 8px 12px;
+      color: #fff;
+    }
+
+    .status.available {
+      background: var(--good);
+    }
+
+    .status.sold-out {
+      background: var(--bad);
+    }
+
+    .status.monitoring {
+      background: var(--accent);
+    }
+
+    .status.pending {
+      background: var(--warn);
+    }
+
+    .field-group {
+      display: grid;
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .field-row {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: 1fr 1fr;
+    }
+
+    label {
+      display: grid;
+      gap: 8px;
+      font-size: 0.89rem;
+      font-weight: 700;
+    }
+
+    input,
+    select {
+      width: 100%;
+      padding: 13px 14px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.8);
+      color: var(--text);
+      font: inherit;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 13px 16px;
+      border: 0;
+      border-radius: 16px;
+      font: inherit;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform 0.16s ease, opacity 0.16s ease;
+    }
+
+    .button:hover {
+      transform: translateY(-1px);
+    }
+
+    .button-primary {
+      background: linear-gradient(135deg, var(--brand) 0%, var(--brand-deep) 100%);
+      color: #fff;
+    }
+
+    .button-secondary {
+      background: #fff;
+      color: var(--text);
+      border: 1px solid var(--line);
+    }
+
+    .button-ghost {
+      background: rgba(255, 255, 255, 0.64);
+      color: var(--text);
+      border: 1px solid var(--line);
+    }
+
+    .stack {
+      display: grid;
+      gap: 14px;
+    }
+
+    .watcher {
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: rgba(255, 255, 255, 0.62);
+    }
+
+    .watcher-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .watcher h4 {
+      margin: 0;
+      font-size: 1.02rem;
+    }
+
+    .watcher p,
+    .timeline p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .timeline {
+      display: grid;
+      gap: 12px;
+    }
+
+    .timeline-item {
+      display: grid;
+      grid-template-columns: 88px 1fr;
+      gap: 12px;
+      padding: 14px 0;
+      border-top: 1px solid rgba(31, 24, 16, 0.08);
+    }
+
+    .timeline-item:first-child {
+      border-top: 0;
+      padding-top: 0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      padding: 12px 0;
+      text-align: left;
+      border-top: 1px solid rgba(31, 24, 16, 0.08);
+      vertical-align: top;
+      font-size: 0.92rem;
+    }
+
+    th {
+      color: var(--muted);
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      border-top: 0;
+      padding-top: 0;
+    }
+
+    .hint {
+      margin-top: 16px;
+      padding: 14px 16px;
+      border-radius: 18px;
+      background: rgba(23, 59, 48, 0.08);
+      color: #21463a;
+      font-size: 0.9rem;
+      line-height: 1.55;
+    }
+
+    .footer-note {
+      margin-top: 18px;
+      color: var(--muted);
+      font-size: 0.86rem;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 1040px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .auth-card {
+        position: static;
+      }
+
+      .cards {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .shell {
+        width: min(100vw - 14px, 100%);
+        margin: 8px auto 20px;
+        padding: 10px;
+        border-radius: 20px;
+      }
+
+      .topbar,
+      .watcher-top,
+      .card-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .hero,
+      .card,
+      .auth-card {
+        padding: 18px;
+      }
+
+      .hero-grid,
+      .field-row {
+        grid-template-columns: 1fr;
+      }
+
+      .timeline-item {
+        grid-template-columns: 1fr;
+        gap: 6px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="topbar">
+      <div class="brand">
+        <div class="brand-mark">HW</div>
+        <div>
+          <h1>HYROX Ticket Watch</h1>
+          <p>회원이 원하는 티켓 조건을 저장하고, 구매 가능 상태를 이메일로 즉시 받는 모니터링 서비스</p>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <div class="pill">체크 시간: 매일 09:00 / 12:00 / 15:00 / 18:00 / 21:00 KST</div>
+        <div class="pill">채널: Email MVP</div>
+      </div>
+    </div>
+
+    <div class="layout">
+      <aside class="auth-card">
+        <div class="tag-row">
+          <span class="tag">MVP</span>
+          <span class="tag">HYROX Incheon</span>
+          <span class="tag">Email Alert</span>
+        </div>
+        <h2 style="margin-top: 18px;">회원 로그인과 티켓 등록</h2>
+        <p class="helper" style="margin-top: 8px; line-height: 1.65;">
+          실제 서비스에서는 이메일 로그인 후 내 관심 티켓을 등록합니다. 지금 화면은 흐름 확인용 프로토타입입니다.
+        </p>
+
+        <div class="field-group">
+          <label>
+            이메일
+            <input id="emailInput" type="email" value="member@ticketwatch.kr" />
+          </label>
+          <label>
+            비밀번호
+            <input type="password" value="password123" />
+          </label>
+          <div class="actions">
+            <button class="button button-primary" type="button" id="loginBtn">로그인</button>
+            <button class="button button-secondary" type="button">회원가입</button>
+          </div>
+        </div>
+
+        <div class="hint">
+          회원은 가입 후 원하는 조건을 여러 개 저장할 수 있습니다. 알림은 감지 시점 기준으로 보내며, 실제 구매 가능 여부는 접속 시점에 다시 확인됩니다.
+        </div>
+
+        <div class="field-group">
+          <h3 style="font-size:1rem;">관심 티켓 추가</h3>
+          <div class="field-row">
+            <label>
+              이벤트
+              <select id="eventInput">
+                <option>HYROX Incheon</option>
+              </select>
+            </label>
+            <label>
+              날짜
+              <select id="dateInput">
+                <option value="2026-05-16">2026-05-16 (토)</option>
+                <option value="2026-05-17">2026-05-17 (일)</option>
+              </select>
+            </label>
+          </div>
+          <div class="field-row">
+            <label>
+              디비전
+              <select id="divisionInput">
+                <option value="Men Singles">Men Singles</option>
+                <option value="Pro Men">Pro Men</option>
+                <option value="Women Singles">Women Singles</option>
+                <option value="Mixed Doubles">Mixed Doubles</option>
+              </select>
+            </label>
+            <label>
+              세부 타입
+              <select id="categoryInput">
+                <option value="Open">Open</option>
+                <option value="Pro">Pro</option>
+              </select>
+            </label>
+          </div>
+          <button class="button button-primary" type="button" id="addWatcherBtn">관심 티켓 저장</button>
+          <p class="status-note">초기 MVP에서는 회원 이메일로만 알림을 보냅니다.</p>
+        </div>
+      </aside>
+
+      <main>
+        <section class="hero">
+          <h2>매진된 HYROX 티켓을 회원 대신 지켜보다가, 풀리는 순간 바로 이메일로 알려주는 서비스</h2>
+          <p>
+            운영자는 한 번의 수집으로 여러 회원의 관심 조건을 동시에 처리하고, 회원은 로그인 후 원하는 티켓만 골라 저장합니다.
+            MVP는 이메일 알림부터 시작하고, 이후 텔레그램이나 문자로 확장할 수 있습니다.
+          </p>
+          <div class="hero-grid metrics">
+            <div class="metric">
+              <strong>5회</strong>
+              <span class="meta">하루 자동 체크 횟수</span>
+            </div>
+            <div class="metric">
+              <strong>3시간</strong>
+              <span class="meta">09:00~21:00 사이 실행 간격</span>
+            </div>
+            <div class="metric">
+              <strong>1회</strong>
+              <span class="meta">상태 변화당 알림 발송 원칙</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="cards">
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <h3>내 모니터링 목록</h3>
+                <p class="meta">회원이 저장한 관심 조건과 마지막 상태를 확인합니다.</p>
+              </div>
+              <span class="status monitoring">실시간 아님 / 정시 체크</span>
+            </div>
+            <div class="stack" id="watcherList"></div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <h3>알림 및 감지 이력</h3>
+                <p class="meta">최근 감지 결과와 이메일 발송 흐름 예시입니다.</p>
+              </div>
+              <span class="tiny">Resend 연동 예정</span>
+            </div>
+            <div class="timeline" id="notificationTimeline"></div>
+          </div>
+        </section>
+
+        <section class="cards">
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <h3>관리자 운영 패널</h3>
+                <p class="meta">체크 작업이 정상 수행되었는지 빠르게 확인하는 대시보드입니다.</p>
+              </div>
+              <button class="button button-ghost" type="button" id="simulateBtn">구매 가능 상태 시뮬레이션</button>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>작업</th>
+                  <th>상태</th>
+                  <th>체크 수</th>
+                  <th>실행 시각</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>HYROX Incheon morning sweep</td>
+                  <td><span class="status available">success</span></td>
+                  <td>12 options</td>
+                  <td>2026-03-19 09:00 KST</td>
+                </tr>
+                <tr>
+                  <td>HYROX Incheon noon sweep</td>
+                  <td><span class="status pending">running</span></td>
+                  <td>12 options</td>
+                  <td>2026-03-19 12:00 KST</td>
+                </tr>
+                <tr>
+                  <td>HYROX Incheon evening sweep</td>
+                  <td><span class="status sold-out">retry queued</span></td>
+                  <td>0 options</td>
+                  <td>2026-03-18 21:00 KST</td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="footer-note">
+              실제 구현에서는 실패 로그, 원본 문구, 셀렉터 에러, 마지막 스크린샷 저장 여부까지 함께 보게 됩니다.
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <h3>백엔드 연결 포인트</h3>
+                <p class="meta">정적 목업 이후 실제 앱으로 옮길 때 필요한 핵심 API입니다.</p>
+              </div>
+            </div>
+            <div class="stack">
+              <div class="watcher">
+                <h4>POST /api/auth/register</h4>
+                <p>이메일과 비밀번호로 회원을 생성하고 세션을 발급합니다.</p>
+              </div>
+              <div class="watcher">
+                <h4>GET /api/watchers</h4>
+                <p>로그인한 회원의 관심 티켓 목록, 마지막 상태, 마지막 알림 시각을 반환합니다.</p>
+              </div>
+              <div class="watcher">
+                <h4>POST /api/watchers</h4>
+                <p>이벤트 날짜, 디비전, 세부 타입을 저장해 새 모니터링 항목을 추가합니다.</p>
+              </div>
+              <div class="watcher">
+                <h4>POST /api/jobs/run-monitor</h4>
+                <p>cron이 호출하는 내부 엔드포인트로 Playwright 수집, 상태 비교, 이메일 발송을 순서대로 수행합니다.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    const watcherList = document.getElementById("watcherList");
+    const notificationTimeline = document.getElementById("notificationTimeline");
+    const emailInput = document.getElementById("emailInput");
+
+    const watchers = [
+      {
+        id: 1,
+        event: "HYROX Incheon",
+        date: "2026-05-16 (토)",
+        division: "Men Singles",
+        category: "Open",
+        status: "sold-out",
+        statusLabel: "매진 감시 중",
+        checkedAt: "2026-03-19 09:00",
+        notifiedAt: "-",
+      },
+      {
+        id: 2,
+        event: "HYROX Incheon",
+        date: "2026-05-17 (일)",
+        division: "Mixed Doubles",
+        category: "Open",
+        status: "available",
+        statusLabel: "구매 가능 감지",
+        checkedAt: "2026-03-19 09:00",
+        notifiedAt: "2026-03-19 09:01",
+      }
+    ];
+
+    const notifications = [
+      {
+        time: "09:01",
+        title: "이메일 발송 완료",
+        body: "HYROX Incheon / 2026-05-17 / Mixed Doubles Open 티켓이 구매 가능 상태로 감지되어 member@ticketwatch.kr 로 발송했습니다."
+      },
+      {
+        time: "09:00",
+        title: "모니터링 실행",
+        body: "Playwright 수집기가 HYROX Incheon 티켓 페이지를 확인해 12개 옵션 상태를 업데이트했습니다."
+      },
+      {
+        time: "전날 21:00",
+        title: "재시도 예약",
+        body: "티켓 페이지 렌더링 실패가 발생해 다음 작업에서 셀렉터를 재검증하도록 표시했습니다."
+      }
+    ];
+
+    function renderWatchers() {
+      watcherList.innerHTML = "";
+
+      watchers.forEach((watcher) => {
+        const el = document.createElement("article");
+        el.className = "watcher";
+        el.innerHTML = `
+          <div class="watcher-top">
+            <div>
+              <h4>${watcher.event}</h4>
+              <p>${watcher.date} · ${watcher.division} · ${watcher.category}</p>
+            </div>
+            <span class="status ${watcher.status}">${watcher.statusLabel}</span>
+          </div>
+          <div class="watcher-tags">
+            <span class="tiny">마지막 확인 ${watcher.checkedAt} KST</span>
+            <span class="tiny">마지막 알림 ${watcher.notifiedAt}</span>
+            <span class="tiny">알림 이메일 ${emailInput.value}</span>
+          </div>
+        `;
+        watcherList.appendChild(el);
+      });
+    }
+
+    function renderNotifications() {
+      notificationTimeline.innerHTML = "";
+
+      notifications.forEach((item) => {
+        const el = document.createElement("div");
+        el.className = "timeline-item";
+        el.innerHTML = `
+          <strong>${item.time}</strong>
+          <div>
+            <h4 style="margin:0 0 4px;">${item.title}</h4>
+            <p>${item.body}</p>
+          </div>
+        `;
+        notificationTimeline.appendChild(el);
+      });
+    }
+
+    document.getElementById("loginBtn").addEventListener("click", () => {
+      notifications.unshift({
+        time: "방금",
+        title: "로그인 성공",
+        body: `${emailInput.value} 계정으로 로그인한 상태를 가정하고 대시보드를 표시했습니다.`
+      });
+      renderNotifications();
+      renderWatchers();
+    });
+
+    document.getElementById("addWatcherBtn").addEventListener("click", () => {
+      const date = document.getElementById("dateInput").selectedOptions[0].textContent;
+      const division = document.getElementById("divisionInput").value;
+      const category = document.getElementById("categoryInput").value;
+
+      watchers.unshift({
+        id: Date.now(),
+        event: document.getElementById("eventInput").value,
+        date,
+        division,
+        category,
+        status: "pending",
+        statusLabel: "첫 체크 대기",
+        checkedAt: "-",
+        notifiedAt: "-",
+      });
+
+      notifications.unshift({
+        time: "방금",
+        title: "관심 티켓 저장",
+        body: `${date} / ${division} / ${category} 조건이 저장되었습니다. 다음 정시 체크에서 상태를 읽어옵니다.`
+      });
+
+      renderWatchers();
+      renderNotifications();
+    });
+
+    document.getElementById("simulateBtn").addEventListener("click", () => {
+      if (!watchers.length) {
+        return;
+      }
+
+      watchers[0].status = "available";
+      watchers[0].statusLabel = "구매 가능 감지";
+      watchers[0].checkedAt = "2026-03-19 12:00";
+      watchers[0].notifiedAt = "2026-03-19 12:01";
+
+      notifications.unshift({
+        time: "12:01",
+        title: "구매 가능 알림 발송",
+        body: `${watchers[0].event} / ${watchers[0].date} / ${watchers[0].division} / ${watchers[0].category} 티켓이 풀려 ${emailInput.value} 로 이메일을 발송했습니다.`
+      });
+
+      renderWatchers();
+      renderNotifications();
+    });
+
+    renderWatchers();
+    renderNotifications();
+  </script>
+</body>
+</html>
