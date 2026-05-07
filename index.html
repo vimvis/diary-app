@@ -1216,31 +1216,38 @@
       recordedChunks = [];
     };
 
-    const blobToBase64 = (blob) => new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const result = reader.result; // data:audio/webm;base64,XXXXX
-        const base64 = result.split(",")[1];
-        resolve(base64);
-      };
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
-    });
-
     const transcribeAudio = async (blob) => {
-      const base64 = await blobToBase64(blob);
-      const res = await fetch("/api/stt", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ audio_base64: base64, mime_type: blob.type })
-      });
-      if (!res.ok) {
-        let msg = `STT 오류 (${res.status})`;
-        try { const j = await res.json(); msg = j.detail?.message || j.error?.message || j.message || msg; } catch {}
-        throw new Error(msg);
+      const ext = (blob.type.includes("mp4") ? "mp4" : (blob.type.includes("mpeg") ? "mp3" : "webm"));
+      const form = new FormData();
+      form.append("file", blob, `audio.${ext}`);
+      form.append("model_id", "scribe_v1");
+      form.append("language_code", "kor");
+
+      // 60초 타임아웃
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 60000);
+
+      try {
+        const res = await fetch("/api/stt", {
+          method: "POST",
+          body: form,
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        const respText = await res.text();
+        if (!res.ok) {
+          let msg = `STT 오류 (${res.status})`;
+          try { const j = JSON.parse(respText); msg = j.detail?.message || j.error?.message || j.message || msg; } catch {}
+          throw new Error(msg);
+        }
+        let data;
+        try { data = JSON.parse(respText); } catch { throw new Error("응답 파싱 실패: " + respText.slice(0, 200)); }
+        return data.text || "";
+      } catch (err) {
+        clearTimeout(timeoutId);
+        if (err.name === "AbortError") throw new Error("60초 초과 — 녹음이 너무 길거나 서버 응답 없음");
+        throw err;
       }
-      const data = await res.json();
-      return data.text || "";
     };
 
     const processVoiceDiary = async () => {

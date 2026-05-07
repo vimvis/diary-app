@@ -1,6 +1,10 @@
-// Vercel Serverless Function: ElevenLabs Scribe STT 프록시
+// Vercel Serverless Function: ElevenLabs Scribe STT 프록시 (raw forward)
 // API 키는 Vercel 환경변수 ELEVENLABS_API_KEY 에 저장
-// 클라이언트에서 base64로 인코딩한 오디오를 받아 ElevenLabs Scribe로 STT
+// 클라이언트가 multipart/form-data로 직접 전송 → 서버는 그대로 forward
+
+module.exports.config = {
+  api: { bodyParser: false }
+};
 
 module.exports = async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -16,27 +20,26 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const { audio_base64, mime_type } = req.body || {};
-    if (!audio_base64) return res.status(400).json({ error: { message: "audio_base64가 필요합니다" } });
+    // raw multipart body 그대로 읽기
+    const chunks = [];
+    for await (const chunk of req) chunks.push(chunk);
+    const body = Buffer.concat(chunks);
 
-    // base64 → Buffer
-    const buffer = Buffer.from(audio_base64, "base64");
-    const blob = new Blob([buffer], { type: mime_type || "audio/webm" });
-
-    const form = new FormData();
-    form.append("file", blob, "audio.webm");
-    form.append("model_id", "scribe_v1");
-    form.append("language_code", "kor");
+    const contentType = req.headers["content-type"] || "multipart/form-data";
 
     const upstream = await fetch("https://api.elevenlabs.io/v1/speech-to-text", {
       method: "POST",
-      headers: { "xi-api-key": apiKey },
-      body: form
+      headers: {
+        "xi-api-key": apiKey,
+        "content-type": contentType
+      },
+      body: body
     });
 
     const text = await upstream.text();
     res.status(upstream.status).setHeader("content-type", "application/json").send(text);
   } catch (err) {
+    console.error("STT proxy error:", err);
     res.status(500).json({ error: { message: "STT 요청 실패: " + (err.message || "알 수 없음") } });
   }
 };
