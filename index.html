@@ -1216,6 +1216,11 @@
       recordedChunks = [];
     };
 
+    const setVoiceProgress = (icon, text, sub = "") => {
+      voiceStatusEl.innerHTML = `<span class="spin" style="border-top-color:var(--primary);border-color:var(--primary-soft)"></span> ${icon} ${escapeHtml(text)}`;
+      if (sub) voiceTranscriptEl.innerHTML = `<span class="voice-interim">${escapeHtml(sub)}</span>`;
+    };
+
     const transcribeAudio = async (blob) => {
       const ext = (blob.type.includes("mp4") ? "mp4" : (blob.type.includes("mpeg") ? "mp3" : "webm"));
       const form = new FormData();
@@ -1223,31 +1228,49 @@
       form.append("model_id", "scribe_v1");
       form.append("language_code", "kor");
 
-      // 60초 타임아웃
+      const sizeMB = (blob.size / 1024 / 1024).toFixed(2);
+      console.log(`[voice] uploading ${sizeMB}MB blob (${blob.type})`);
+
+      // 진행 시간 카운터
+      const t0 = Date.now();
+      const ticker = setInterval(() => {
+        const sec = Math.floor((Date.now() - t0) / 1000);
+        setVoiceProgress("📤", `오디오 업로드 & 변환 중... (${sec}초)`, `${sizeMB}MB · ElevenLabs Scribe 처리 중`);
+      }, 1000);
+
+      // 90초 타임아웃 (Vercel maxDuration 60초 + 네트워크 여유)
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 60000);
+      const timeoutId = setTimeout(() => controller.abort(), 90000);
 
       try {
-        const res = await fetch("/api/stt", {
-          method: "POST",
-          body: form,
-          signal: controller.signal
-        });
+        const res = await fetch("/api/stt", { method: "POST", body: form, signal: controller.signal });
         clearTimeout(timeoutId);
+        clearInterval(ticker);
         const respText = await res.text();
+        console.log(`[voice] STT response status=${res.status}`, respText.slice(0, 500));
         if (!res.ok) {
           let msg = `STT 오류 (${res.status})`;
-          try { const j = JSON.parse(respText); msg = j.detail?.message || j.error?.message || j.message || msg; } catch {}
+          try { const j = JSON.parse(respText); msg = j.detail?.message || j.error?.message || j.message || msg; } catch { msg += `: ${respText.slice(0,150)}`; }
           throw new Error(msg);
         }
         let data;
-        try { data = JSON.parse(respText); } catch { throw new Error("응답 파싱 실패: " + respText.slice(0, 200)); }
+        try { data = JSON.parse(respText); } catch { throw new Error("응답 파싱 실패: " + respText.slice(0, 150)); }
         return data.text || "";
       } catch (err) {
         clearTimeout(timeoutId);
-        if (err.name === "AbortError") throw new Error("60초 초과 — 녹음이 너무 길거나 서버 응답 없음");
+        clearInterval(ticker);
+        if (err.name === "AbortError") throw new Error("90초 초과 — 서버 응답 없음. 녹음을 짧게 다시 시도해주세요.");
         throw err;
       }
+    };
+
+    const showVoiceError = (msg) => {
+      voiceStatusEl.innerHTML = `⚠️ <span style="color:var(--danger)">변환 실패</span>`;
+      voiceTranscriptEl.innerHTML = `<div style="color:var(--danger);font-size:0.85rem">${escapeHtml(msg)}</div>`;
+      const doneBtn = document.getElementById("voice-done-btn");
+      doneBtn.textContent = "닫기";
+      doneBtn.disabled = false;
+      doneBtn.onclick = closeVoiceModal;
     };
 
     const processVoiceDiary = async () => {
@@ -1256,36 +1279,30 @@
       doneBtn.innerHTML = '<span class="spin"></span>';
 
       // 1) 녹음 종료
+      setVoiceProgress("⏹️", "녹음 종료 중...");
       const blob = await stopRecording();
       if (!blob || blob.size < 1000) {
-        toast("녹음된 내용이 너무 짧습니다");
-        closeVoiceModal();
+        showVoiceError("녹음된 내용이 너무 짧습니다");
         return;
       }
 
       // 2) STT 호출
-      const tEl = voiceStatusTextEl();
-      if (tEl) tEl.textContent = "텍스트로 변환 중...";
-      voiceStatusEl.innerHTML = `<span class="spin" style="border-top-color:var(--primary);border-color:var(--primary-soft)"></span> 텍스트로 변환 중...`;
-
       let transcript = "";
       try {
         transcript = (await transcribeAudio(blob)).trim();
       } catch(err) {
-        closeVoiceModal();
-        toast("STT 실패: " + err.message);
+        console.error("STT error:", err);
+        showVoiceError("STT 실패: " + err.message);
         return;
       }
 
       if (!transcript) {
-        closeVoiceModal();
-        toast("음성을 인식하지 못했습니다");
+        showVoiceError("음성을 인식하지 못했습니다 (빈 응답)");
         return;
       }
 
       // 3) Claude Haiku로 분리
-      voiceStatusEl.innerHTML = `<span class="spin" style="border-top-color:var(--accent);border-color:var(--accent-soft)"></span> AI가 일기를 분리 중...`;
-      voiceTranscriptEl.textContent = transcript;
+      setVoiceProgress("✂️", "AI가 일기를 분리 중...", `인식된 텍스트: ${transcript.slice(0, 80)}${transcript.length > 80 ? "..." : ""}`);
 
       const today = toDateStr(new Date());
       try {
@@ -1306,6 +1323,8 @@
         setSaveStatus(`음성 일기 변환 완료 (${formatKoDate(targetDate)}). 확인 후 저장해주세요.`);
         toast("음성 일기가 변환됐어요!");
       } catch(err) {
+        console.error("AI split error:", err);
+        // 분리 실패해도 원문으로 입력하고 모달 닫기
         closeVoiceModal();
         draftItems = [transcript]; draftImages = [];
         renderFields(); saveDraft();

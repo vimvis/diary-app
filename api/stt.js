@@ -1,9 +1,8 @@
 // Vercel Serverless Function: ElevenLabs Scribe STT 프록시 (raw forward)
-// API 키는 Vercel 환경변수 ELEVENLABS_API_KEY 에 저장
-// 클라이언트가 multipart/form-data로 직접 전송 → 서버는 그대로 forward
 
 module.exports.config = {
-  api: { bodyParser: false }
+  api: { bodyParser: false },
+  maxDuration: 60
 };
 
 module.exports = async function handler(req, res) {
@@ -16,17 +15,20 @@ module.exports = async function handler(req, res) {
 
   const apiKey = process.env.ELEVENLABS_API_KEY;
   if (!apiKey) {
-    return res.status(500).json({ error: { message: "Vercel 환경변수 ELEVENLABS_API_KEY가 설정되지 않았어요." } });
+    return res.status(500).json({ error: { message: "ELEVENLABS_API_KEY가 Vercel에 설정되지 않았어요." } });
   }
 
+  const startTime = Date.now();
   try {
-    // raw multipart body 그대로 읽기
     const chunks = [];
     for await (const chunk of req) chunks.push(chunk);
     const body = Buffer.concat(chunks);
+    const readMs = Date.now() - startTime;
 
     const contentType = req.headers["content-type"] || "multipart/form-data";
+    console.log(`[stt] received ${body.length} bytes (read ${readMs}ms), forwarding to ElevenLabs`);
 
+    const fetchStart = Date.now();
     const upstream = await fetch("https://api.elevenlabs.io/v1/speech-to-text", {
       method: "POST",
       headers: {
@@ -35,11 +37,13 @@ module.exports = async function handler(req, res) {
       },
       body: body
     });
-
+    const fetchMs = Date.now() - fetchStart;
     const text = await upstream.text();
+    console.log(`[stt] upstream status=${upstream.status} (${fetchMs}ms), body=${text.length} chars`);
+
     res.status(upstream.status).setHeader("content-type", "application/json").send(text);
   } catch (err) {
-    console.error("STT proxy error:", err);
-    res.status(500).json({ error: { message: "STT 요청 실패: " + (err.message || "알 수 없음") } });
+    console.error("[stt] error:", err);
+    res.status(500).json({ error: { message: "STT 프록시 실패: " + (err.message || "알 수 없음") } });
   }
 };
