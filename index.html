@@ -1,0 +1,1306 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>오늘의 기억</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #f5f1e8; --bg2: #ece5d9;
+      --surface: rgba(255,252,246,0.92); --surface-strong: #fffaf2; --surface2: #f2eadc;
+      --border: rgba(71,53,30,0.12); --text: #241c15; --text2: #6b5d4c; --text3: #a3947f;
+      --primary: #c96f3b; --primary-soft: rgba(201,111,59,0.12); --primary-glow: rgba(201,111,59,0.24);
+      --accent: #5d8b72; --accent-soft: rgba(93,139,114,0.12);
+      --danger: #d9534f; --danger-soft: rgba(217,83,79,0.1);
+      --shadow: 0 18px 40px rgba(62,42,19,0.08); --shadow-lg: 0 22px 50px rgba(62,42,19,0.14);
+      --radius: 22px; --radius-sm: 14px; --header-h: 68px; --nav-h: 76px;
+      --transition: 0.18s cubic-bezier(0.4,0,0.2,1);
+    }
+    [data-theme="dark"] {
+      --bg: #121317; --bg2: #181a20;
+      --surface: rgba(28,30,37,0.92); --surface-strong: #20232b; --surface2: #262933;
+      --border: rgba(255,255,255,0.08); --text: #f5f1eb; --text2: #b4a798; --text3: #6e655d;
+      --primary: #f08d49; --primary-soft: rgba(240,141,73,0.12); --primary-glow: rgba(240,141,73,0.26);
+      --accent: #7dc49d; --accent-soft: rgba(125,196,157,0.13);
+      --danger: #f07167; --danger-soft: rgba(240,113,103,0.12);
+      --shadow: 0 18px 40px rgba(0,0,0,0.26); --shadow-lg: 0 22px 50px rgba(0,0,0,0.35);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100dvh; overflow-x: hidden;
+      background: radial-gradient(circle at top left,rgba(240,141,73,0.12),transparent 28%),
+        radial-gradient(circle at top right,rgba(125,196,157,0.12),transparent 22%),
+        linear-gradient(180deg,var(--bg) 0%,color-mix(in srgb,var(--bg) 86%,#000 4%) 100%);
+      color: var(--text);
+      font-family: "Noto Sans KR",-apple-system,BlinkMacSystemFont,sans-serif;
+      transition: background var(--transition),color var(--transition);
+    }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
+    button,input,textarea,select { font: inherit; }
+    #app { display: flex; flex-direction: column; min-height: 100dvh; }
+    header {
+      position: sticky; top: 0; z-index: 50;
+      display: flex; align-items: center; justify-content: space-between;
+      height: var(--header-h); padding: 0 20px;
+      border-bottom: 1px solid var(--border);
+      background: color-mix(in srgb,var(--surface) 88%,transparent);
+      backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+    }
+    .header-left { display: flex; align-items: center; gap: 12px; }
+    .logo {
+      display: flex; align-items: center; justify-content: center;
+      width: 38px; height: 38px; border-radius: 13px;
+      background: linear-gradient(135deg,var(--primary) 0%,#f6be72 100%);
+      box-shadow: 0 8px 18px var(--primary-glow); color: #fff; flex-shrink: 0;
+    }
+    .logo svg { width: 18px; height: 18px; }
+    .header-title { font-size: 0.95rem; font-weight: 800; letter-spacing: -0.02em; }
+    .header-date { margin-top: 2px; color: var(--text2); font-size: 0.72rem; }
+    .icon-btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 38px; height: 38px; border: 1px solid var(--border); border-radius: 12px;
+      background: var(--surface-strong); color: var(--text2); cursor: pointer;
+      transition: transform var(--transition),color var(--transition),background var(--transition);
+    }
+    .icon-btn:hover { transform: translateY(-1px); background: var(--surface2); color: var(--text); }
+    .icon-btn svg { width: 16px; height: 16px; }
+    main { flex: 1; width: 100%; max-width: 1180px; margin: 0 auto; padding: 22px 20px calc(var(--nav-h) + 28px); }
+    .view { display: none; }
+    .view.active { display: block; animation: fadeUp 0.22s ease both; }
+    .grid-home { display: grid; grid-template-columns: 420px minmax(0,1fr); gap: 18px; }
+    .stack { display: flex; flex-direction: column; gap: 16px; }
+    .card { border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); box-shadow: var(--shadow); padding: 20px; }
+    .hero-card {
+      position: relative; overflow: hidden;
+      background: linear-gradient(135deg,color-mix(in srgb,var(--primary) 18%,var(--surface-strong)) 0%,var(--surface) 100%);
+    }
+    .hero-card::after {
+      content: ""; position: absolute; inset: auto -70px -70px auto;
+      width: 180px; height: 180px; border-radius: 50%;
+      background: radial-gradient(circle,rgba(255,255,255,0.18),transparent 62%); pointer-events: none;
+    }
+    .section-label {
+      display: inline-flex; align-items: center; gap: 6px; margin-bottom: 12px;
+      color: var(--text3); font-size: 0.66rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase;
+    }
+    .section-label svg { width: 12px; height: 12px; }
+    .hero-title { font-size: 1.32rem; font-weight: 800; line-height: 1.3; letter-spacing: -0.03em; }
+    .hero-sub { margin-top: 8px; color: var(--text2); font-size: 0.9rem; line-height: 1.7; }
+    .quick-stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-top: 16px; }
+    .stat-chip { padding: 12px; border: 1px solid var(--border); border-radius: 16px; background: color-mix(in srgb,var(--surface-strong) 82%,transparent); }
+    .stat-chip strong { display: block; font-size: 1rem; font-weight: 800; }
+    .stat-chip span { display: block; margin-top: 3px; color: var(--text2); font-size: 0.74rem; }
+    .date-block { margin-bottom: 16px; }
+    .date-input,.mem-input,.search-input,.filter-select {
+      width: 100%; border: 1.5px solid transparent; border-radius: var(--radius-sm);
+      background: var(--bg2); color: var(--text);
+      transition: border-color var(--transition),background var(--transition),box-shadow var(--transition);
+    }
+    .date-input,.search-input,.filter-select { padding: 12px 14px; font-size: 0.9rem; }
+    .date-input::-webkit-calendar-picker-indicator { opacity: 0.35; cursor: pointer; }
+    [data-theme="dark"] .date-input::-webkit-calendar-picker-indicator { filter: invert(1); }
+    .date-input:hover,.mem-input:hover,.search-input:hover,.filter-select:hover { border-color: var(--primary-glow); }
+    .date-input:focus,.mem-input:focus,.search-input:focus,.filter-select:focus {
+      outline: none; border-color: var(--primary); background: var(--surface-strong); box-shadow: 0 0 0 4px var(--primary-soft);
+    }
+    .fields { display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; }
+    .item-field { padding: 14px; border: 1px solid var(--border); border-radius: 18px; background: color-mix(in srgb,var(--surface-strong) 86%,transparent); }
+    .field-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+    .field-label { display: flex; align-items: center; gap: 8px; color: var(--text2); font-size: 0.78rem; font-weight: 700; }
+    .field-num,.entry-n {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 22px; height: 22px; border-radius: 999px;
+      background: var(--primary-soft); color: var(--primary); font-size: 0.66rem; font-weight: 800; flex-shrink: 0;
+    }
+    .field-actions { display: flex; align-items: center; gap: 6px; }
+    .mini-btn,.ghost-btn,.solid-btn,.random-btn {
+      border: none; cursor: pointer;
+      transition: transform var(--transition),background var(--transition),color var(--transition),box-shadow var(--transition);
+    }
+    .mini-btn { padding: 6px 10px; border-radius: 999px; background: var(--danger-soft); color: var(--danger); font-size: 0.72rem; font-weight: 700; }
+    .mini-btn:hover { transform: translateY(-1px); }
+    .mini-btn[disabled] { visibility: hidden; }
+    .img-btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 28px; height: 28px; border: 1px solid var(--border); border-radius: 9px;
+      background: var(--surface2); color: var(--text3); cursor: pointer;
+      transition: background var(--transition),color var(--transition);
+    }
+    .img-btn:hover { background: var(--accent-soft); color: var(--accent); }
+    .img-btn svg { width: 14px; height: 14px; }
+    .photo-thumb { position: relative; margin-top: 8px; }
+    .photo-thumb img { width: 100%; max-height: 180px; object-fit: cover; border-radius: 10px; display: block; }
+    .photo-remove {
+      position: absolute; top: 6px; right: 6px; width: 24px; height: 24px;
+      border-radius: 50%; background: rgba(0,0,0,0.55); color: #fff;
+      border: none; cursor: pointer; font-size: 14px;
+      display: flex; align-items: center; justify-content: center; line-height: 1;
+    }
+    .mem-input { min-height: 74px; padding: 12px 14px; resize: vertical; font-size: 0.9rem; line-height: 1.7; }
+    .mem-input::placeholder { color: var(--text3); }
+    .action-row { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+    .ghost-btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+      padding: 11px 14px; border-radius: 14px; background: var(--surface2); color: var(--text2); font-size: 0.84rem; font-weight: 700;
+    }
+    .ghost-btn:hover { transform: translateY(-1px); background: var(--primary-soft); color: var(--primary); }
+    .status-line { margin-top: -4px; margin-bottom: 16px; color: var(--text3); font-size: 0.74rem; }
+    .emotion-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+    .emotion-chip {
+      padding: 10px 12px; border: 1px solid var(--border); border-radius: 999px;
+      background: var(--surface-strong); color: var(--text2); font-size: 0.82rem; font-weight: 700; cursor: pointer;
+      transition: background var(--transition),color var(--transition),border-color var(--transition),transform var(--transition);
+    }
+    .emotion-chip.active { background: var(--primary-soft); border-color: color-mix(in srgb,var(--primary) 42%,transparent); color: var(--primary); }
+    .emotion-chip:hover { transform: translateY(-1px); }
+    .slider-row { display: flex; align-items: center; gap: 12px; }
+    .slider-row input[type="range"] { width: 100%; accent-color: var(--primary); }
+    .slider-badge { min-width: 52px; padding: 8px 10px; border-radius: 12px; background: var(--accent-soft); color: var(--accent); text-align: center; font-size: 0.76rem; font-weight: 800; }
+    .save-btn,.solid-btn,.random-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: 14px; color: #fff; font-weight: 800; }
+    .save-btn,.solid-btn { width: 100%; padding: 14px; background: linear-gradient(135deg,var(--primary) 0%,#f6be72 100%); box-shadow: 0 10px 24px var(--primary-glow); }
+    .save-btn:hover:not(:disabled),.solid-btn:hover { transform: translateY(-1px); }
+    .save-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    /* Voice diary button */
+    .voice-fab {
+      display: none; width: 100%; padding: 13px; border-radius: 14px;
+      background: linear-gradient(135deg,#e05a4a 0%,#f08d49 100%);
+      box-shadow: 0 10px 24px rgba(224,90,74,0.28);
+      color: #fff; font-weight: 800; font-size: 0.9rem; gap: 8px;
+      align-items: center; justify-content: center; border: none; cursor: pointer;
+      transition: transform var(--transition),box-shadow var(--transition);
+    }
+    .voice-fab.visible { display: inline-flex; }
+    .voice-fab:hover { transform: translateY(-1px); }
+    .voice-fab svg { width: 18px; height: 18px; }
+
+    /* AI analysis panel */
+    .ai-panel { margin-top: 12px; }
+    .ai-analyze-btn {
+      width: 100%; margin-top: 8px; padding: 11px 14px; border-radius: 14px;
+      background: var(--accent-soft); color: var(--accent); font-weight: 700; font-size: 0.84rem;
+      border: 1px solid color-mix(in srgb,var(--accent) 30%,transparent);
+      display: inline-flex; align-items: center; justify-content: center; gap: 7px; cursor: pointer;
+      transition: transform var(--transition),background var(--transition);
+    }
+    .ai-analyze-btn:hover { transform: translateY(-1px); background: color-mix(in srgb,var(--accent-soft) 180%,transparent); }
+
+    /* Voice modal */
+    .voice-status { margin: 8px 0 10px; font-size: 0.92rem; font-weight: 700; color: var(--text2); display: flex; align-items: center; gap: 8px; justify-content: center; }
+    .voice-transcript {
+      min-height: 110px; max-height: 260px; overflow-y: auto;
+      padding: 14px; border-radius: 14px; background: var(--bg2);
+      font-size: 0.88rem; line-height: 1.75; color: var(--text); text-align: left; margin: 10px 0; white-space: pre-wrap;
+    }
+    .voice-interim { color: var(--text3); }
+    .voice-hint { color: var(--text3); font-size: 0.76rem; margin-bottom: 14px; text-align: center; }
+    .rec-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: #e05a4a; animation: pulse-dot 1s ease infinite; flex-shrink: 0; }
+    @keyframes pulse-dot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.75)} }
+
+    /* Settings extras */
+    .settings-feature-card { margin-top: 14px; border: 1px solid var(--border); border-radius: 18px; padding: 16px; background: color-mix(in srgb,var(--surface-strong) 86%,transparent); }
+    .settings-feature-card h4 { font-size: 0.92rem; font-weight: 800; margin-bottom: 12px; }
+    .settings-toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); }
+    .settings-toggle-row:last-of-type { border-bottom: none; }
+    .stl { font-size: 0.86rem; font-weight: 700; }
+    .std { color: var(--text3); font-size: 0.74rem; margin-top: 2px; }
+    .toggle-switch { position: relative; width: 42px; height: 24px; flex-shrink: 0; }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider { position: absolute; inset: 0; background: var(--surface2); border-radius: 999px; cursor: pointer; transition: background 0.2s; }
+    .toggle-slider::before { content:''; position: absolute; left: 3px; top: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: transform 0.2s; }
+    .toggle-switch input:checked + .toggle-slider { background: var(--primary); }
+    .toggle-switch input:checked + .toggle-slider::before { transform: translateX(18px); }
+    .api-key-group { display: flex; gap: 8px; margin-top: 8px; }
+    .api-key-input {
+      flex: 1; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 12px;
+      background: var(--bg2); color: var(--text); font-size: 0.82rem; font-family: monospace;
+      transition: border-color var(--transition);
+    }
+    .api-key-input:focus { outline: none; border-color: var(--primary); }
+
+    .right-panel { display: flex; flex-direction: column; gap: 16px; }
+    .entry-card { overflow: hidden; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); box-shadow: var(--shadow); animation: fadeUp 0.3s ease both; }
+    .entry-card:hover { box-shadow: var(--shadow-lg); }
+    .entry-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 15px 16px 12px; border-bottom: 1px solid var(--border); }
+    .entry-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+    .badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 999px; font-size: 0.68rem; font-weight: 800; letter-spacing: 0.02em; }
+    .badge-today { background: var(--primary); color: #fff; }
+    .badge-past { background: var(--surface2); color: var(--text2); border: 1px solid var(--border); }
+    .badge-emo { background: var(--accent-soft); color: var(--accent); }
+    .entry-date-str { color: var(--text2); font-size: 0.8rem; font-weight: 600; }
+    .del-btn { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border: none; border-radius: 10px; background: transparent; color: var(--text3); cursor: pointer; }
+    .del-btn:hover { background: var(--danger-soft); color: var(--danger); }
+    .entry-body { display: flex; flex-direction: column; gap: 12px; padding: 16px; }
+    .entry-row { display: flex; align-items: flex-start; gap: 11px; }
+    .entry-text { flex: 1; font-size: 0.9rem; line-height: 1.72; }
+    .entry-img { width: 100%; max-height: 200px; object-fit: cover; border-radius: 10px; margin-top: 6px; display: block; }
+    .entry-footer { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 16px 16px; }
+    .tag-chip { padding: 6px 10px; border-radius: 999px; background: var(--surface2); color: var(--text2); font-size: 0.74rem; font-weight: 700; }
+    .empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 34px 20px; text-align: center; }
+    .empty-ico { display: inline-flex; align-items: center; justify-content: center; width: 58px; height: 58px; border-radius: 20px; background: var(--primary-soft); color: var(--primary); }
+    .empty-title { color: var(--text2); font-size: 0.95rem; font-weight: 700; }
+    .empty-desc { color: var(--text3); font-size: 0.8rem; line-height: 1.65; }
+    .explore-grid,.summary-grid,.settings-grid { display: grid; grid-template-columns: 320px minmax(0,1fr); gap: 18px; }
+    .search-group { display: flex; flex-direction: column; gap: 12px; }
+    .filter-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .search-results { display: flex; flex-direction: column; gap: 12px; }
+    .result-card { padding: 16px; border: 1px solid var(--border); border-radius: 18px; background: color-mix(in srgb,var(--surface-strong) 88%,transparent); }
+    .result-card h4 { margin-bottom: 6px; font-size: 0.94rem; font-weight: 800; }
+    .result-card p { color: var(--text2); font-size: 0.85rem; line-height: 1.7; }
+    .result-actions { display: flex; gap: 8px; margin-top: 12px; }
+    mark { padding: 0 2px; border-radius: 4px; background: rgba(246,190,114,0.45); color: inherit; }
+    .random-btn { width: 100%; padding: 12px 14px; background: linear-gradient(135deg,var(--accent) 0%,#9ad7b1 100%); box-shadow: 0 10px 22px rgba(125,196,157,0.2); }
+    .random-card { min-height: 200px; display: flex; flex-direction: column; justify-content: center; }
+    .summary-top { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 16px; }
+    .summary-metric { padding: 16px; border: 1px solid var(--border); border-radius: 18px; background: color-mix(in srgb,var(--surface-strong) 88%,transparent); }
+    .summary-metric strong { display: block; margin-top: 6px; font-size: 1.15rem; font-weight: 800; }
+    .summary-metric span { color: var(--text2); font-size: 0.78rem; }
+    .summary-section { margin-top: 14px; padding: 18px; border: 1px solid var(--border); border-radius: 18px; background: color-mix(in srgb,var(--surface-strong) 86%,transparent); }
+    .summary-section h4 { margin-bottom: 10px; font-size: 0.92rem; font-weight: 800; }
+    .summary-list { display: flex; flex-wrap: wrap; gap: 8px; }
+    .summary-list .tag-chip { background: var(--primary-soft); color: var(--primary); }
+    .emotion-bars { display: flex; flex-direction: column; gap: 10px; }
+    .emotion-bar-row { display: grid; grid-template-columns: 74px 1fr 42px; gap: 10px; align-items: center; font-size: 0.8rem; color: var(--text2); }
+    .emotion-bar-track { height: 10px; overflow: hidden; border-radius: 999px; background: var(--surface2); }
+    .emotion-bar-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg,var(--accent) 0%,#9ad7b1 100%); }
+    .quote-list { display: flex; flex-direction: column; gap: 10px; color: var(--text2); font-size: 0.87rem; line-height: 1.7; }
+    .quote-item { padding: 12px 14px; border-left: 3px solid var(--primary); border-radius: 0 14px 14px 0; background: color-mix(in srgb,var(--surface2) 74%,transparent); }
+    .settings-actions { display: flex; flex-direction: column; gap: 10px; }
+    .file-input { display: none; }
+    .danger-btn { background: linear-gradient(135deg,var(--danger) 0%,#f39a88 100%); box-shadow: 0 10px 24px rgba(217,83,79,0.22); }
+    .settings-note { color: var(--text2); font-size: 0.84rem; line-height: 1.7; }
+    .modal-backdrop { position: fixed; inset: 0; z-index: 120; display: none; align-items: center; justify-content: center; padding: 20px; background: rgba(15,17,21,0.56); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+    .modal-backdrop.open { display: flex; }
+    .modal-card { width: min(680px,100%); max-height: min(80dvh,760px); overflow: auto; border: 1px solid var(--border); border-radius: 24px; background: var(--surface); box-shadow: var(--shadow-lg); padding: 20px; }
+    .modal-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+    .modal-title { font-size: 1rem; font-weight: 800; }
+    .cal-card { padding: 20px; }
+    .cal-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+    .cal-month { font-size: 1rem; font-weight: 800; }
+    .cal-arrow { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-strong); color: var(--text2); cursor: pointer; }
+    .cal-arrow:hover { background: var(--surface2); color: var(--text); }
+    .cal-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 5px; }
+    .cal-hdr { padding: 6px 0; color: var(--text3); font-size: 0.67rem; font-weight: 800; text-align: center; }
+    .cal-day { position: relative; display: flex; align-items: center; justify-content: center; aspect-ratio: 1; border-radius: 12px; color: var(--text2); cursor: pointer; transition: background var(--transition),color var(--transition),transform var(--transition); }
+    .cal-day:hover:not(.dim) { transform: translateY(-1px); background: var(--surface2); color: var(--text); }
+    .cal-day.today { background: var(--primary); color: #fff; font-weight: 800; }
+    .cal-day.has-entry::after { content:""; position: absolute; bottom: 5px; left: 50%; width: 4px; height: 4px; border-radius: 50%; background: var(--accent); transform: translateX(-50%); }
+    .cal-day.dim { color: var(--text3); opacity: 0.32; cursor: default; }
+    nav { position: fixed; right: 0; bottom: 0; left: 0; z-index: 50; display: flex; align-items: center; justify-content: center; gap: 8px; height: var(--nav-h); padding: 0 16px; padding-bottom: env(safe-area-inset-bottom); border-top: 1px solid var(--border); background: color-mix(in srgb,var(--surface) 90%,transparent); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); }
+    .nav-btn { display: flex; flex: 1; flex-direction: column; align-items: center; gap: 4px; max-width: 110px; padding: 10px 8px; border: none; border-radius: 16px; background: transparent; color: var(--text3); cursor: pointer; transition: background var(--transition),color var(--transition); }
+    .nav-btn.active { background: var(--primary-soft); color: var(--primary); }
+    .nav-btn svg { width: 20px; height: 20px; stroke-width: 1.9; }
+    .nav-btn span { font-size: 0.68rem; font-weight: 800; }
+    .toast { position: fixed; bottom: calc(var(--nav-h) + 14px); left: 50%; z-index: 100; padding: 10px 18px; border-radius: 999px; background: var(--text); color: var(--bg); font-size: 0.8rem; font-weight: 700; opacity: 0; pointer-events: none; transform: translateX(-50%) translateY(16px); transition: opacity 0.22s ease,transform 0.22s ease; box-shadow: var(--shadow-lg); }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .spin { display: inline-block; width: 15px; height: 15px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: rotate 0.65s linear infinite; }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes rotate { to{transform:rotate(360deg)} }
+    @media (max-width:980px) { .grid-home,.explore-grid,.summary-grid,.settings-grid { grid-template-columns: 1fr; } }
+    @media (max-width:720px) { header{padding:0 14px} main{padding:14px 14px calc(var(--nav-h)+18px)} .quick-stats,.summary-top{grid-template-columns:1fr} .filter-row{grid-template-columns:1fr} nav{padding:0 10px} }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <header>
+      <div class="header-left">
+        <div class="logo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"></path>
+          </svg>
+        </div>
+        <div>
+          <div class="header-title">오늘의 기억</div>
+          <div class="header-date" id="hdr-date"></div>
+        </div>
+      </div>
+      <button class="icon-btn" id="theme-btn" aria-label="테마 전환">
+        <svg id="ico-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <circle cx="12" cy="12" r="4"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+          <line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg id="ico-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="display:none">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+      </button>
+    </header>
+
+    <main>
+      <section id="view-home" class="view active">
+        <div class="grid-home">
+          <div class="stack">
+            <div class="card hero-card">
+              <div class="section-label">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"></path></svg>
+                오늘의 작성
+              </div>
+              <div class="hero-title">한 줄만 남겨도 충분하고, 더 길게 적어도 됩니다.</div>
+              <div class="hero-sub">기억 개수는 자유롭게 늘리고 줄일 수 있고, 감정과 함께 기록을 남길 수 있습니다.</div>
+              <div class="quick-stats" id="quick-stats"></div>
+            </div>
+
+            <!-- 보이스 일기 버튼 (설정에서 활성화 시 표시) -->
+            <button class="voice-fab" id="voice-fab-btn" type="button">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                <line x1="12" y1="19" x2="12" y2="23"></line>
+                <line x1="8" y1="23" x2="16" y2="23"></line>
+              </svg>
+              보이스 일기 시작
+            </button>
+
+            <div class="card">
+              <div class="date-block">
+                <div class="section-label">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                  날짜 선택
+                </div>
+                <input type="date" class="date-input" id="date-input" />
+              </div>
+              <div class="section-label">기억 항목</div>
+              <div class="fields" id="fields"></div>
+              <div class="action-row">
+                <button class="ghost-btn" id="add-item-btn" type="button">+ 기억 추가</button>
+              </div>
+              <div class="section-label">오늘의 감정</div>
+              <div class="emotion-grid" id="emotion-grid"></div>
+              <div class="slider-row">
+                <input id="emotion-intensity" type="range" min="1" max="5" value="3" />
+                <div class="slider-badge" id="emotion-intensity-label">3 / 5</div>
+              </div>
+              <div class="status-line" id="save-status">아직 저장되지 않았습니다.</div>
+              <button class="save-btn" id="save-btn" type="button">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                <span id="save-label">일기 저장하기</span>
+              </button>
+              <!-- AI 분석 버튼 -->
+              <button class="ai-analyze-btn" id="ai-analyze-btn" type="button">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px">
+                  <circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path>
+                </svg>
+                AI 감정 분석
+              </button>
+              <div class="ai-panel" id="ai-panel"></div>
+            </div>
+          </div>
+
+          <div class="right-panel">
+            <div class="card" id="today-panel"></div>
+            <div class="card" id="anniversary-panel"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-explore" class="view">
+        <div class="explore-grid">
+          <div class="stack">
+            <div class="card">
+              <div class="section-label">기록 탐색</div>
+              <div class="search-group">
+                <input class="search-input" id="search-query" type="search" placeholder="단어, 문장, 주제를 검색해보세요" />
+                <div class="filter-row">
+                  <input class="date-input" id="search-from" type="date" />
+                  <input class="date-input" id="search-to" type="date" />
+                </div>
+                <select class="filter-select" id="search-emotion"><option value="">감정 전체</option></select>
+                <button class="random-btn" id="random-entry-btn" type="button">랜덤 기록 보기</button>
+              </div>
+            </div>
+            <div class="card random-card" id="random-panel"></div>
+          </div>
+          <div class="card">
+            <div class="section-label">검색 결과</div>
+            <div class="search-results" id="search-results"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-calendar" class="view">
+        <div class="card cal-card">
+          <div class="cal-nav">
+            <button class="cal-arrow" id="cal-prev" type="button" aria-label="이전 달">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </button>
+            <span class="cal-month" id="cal-label"></span>
+            <button class="cal-arrow" id="cal-next" type="button" aria-label="다음 달">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </button>
+          </div>
+          <div class="cal-grid" id="cal-grid"></div>
+        </div>
+      </section>
+
+      <section id="view-summary" class="view">
+        <div class="summary-grid">
+          <div class="card">
+            <div class="section-label">기간 요약</div>
+            <div class="search-group">
+              <select class="filter-select" id="summary-range">
+                <option value="7">최근 7일</option>
+                <option value="30">최근 30일</option>
+                <option value="custom">직접 선택</option>
+              </select>
+              <div class="filter-row">
+                <input class="date-input" id="summary-from" type="date" />
+                <input class="date-input" id="summary-to" type="date" />
+              </div>
+              <button class="solid-btn" id="summary-refresh" type="button">요약 새로 보기</button>
+            </div>
+          </div>
+          <div class="card">
+            <div class="summary-top" id="summary-top"></div>
+            <div id="summary-detail"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-settings" class="view">
+        <div class="settings-grid">
+          <div class="card">
+            <div class="section-label">데이터 관리</div>
+            <div class="settings-actions">
+              <button class="solid-btn" id="import-firebase-btn" type="button">기존 Firebase 데이터 가져오기</button>
+              <button class="solid-btn" id="export-json-btn" type="button">JSON 백업 내보내기</button>
+              <button class="ghost-btn" id="export-csv-btn" type="button">CSV 내보내기</button>
+              <button class="ghost-btn" id="import-json-btn" type="button">백업 파일 가져오기</button>
+              <input class="file-input" id="import-json-file" type="file" accept="application/json" />
+              <button class="solid-btn danger-btn" id="clear-data-btn" type="button">모든 로컬 데이터 초기화</button>
+            </div>
+
+            <!-- AI / 음성 설정 카드 -->
+            <div class="settings-feature-card">
+              <h4>AI · 음성 기능</h4>
+              <div class="settings-toggle-row">
+                <div>
+                  <div class="stl">보이스 일기 버튼 표시</div>
+                  <div class="std">홈에서 음성으로 일기를 써보세요</div>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="voice-toggle" />
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+              <div style="margin-top:12px">
+                <div class="stl">Claude API 키</div>
+                <div class="std">AI 분석 · 음성일기 변환에 사용 (Haiku 모델, 저렴)</div>
+                <div class="api-key-group">
+                  <input class="api-key-input" id="claude-api-key" type="password" placeholder="sk-ant-api03-..." />
+                  <button class="ghost-btn" id="save-api-key-btn" type="button">저장</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="section-label">상태</div>
+            <div class="summary-section">
+              <h4>로컬 저장 현황</h4>
+              <div class="quote-list" id="settings-status"></div>
+            </div>
+            <div class="summary-section">
+              <h4>자동저장 동작</h4>
+              <div class="settings-note">입력 중인 초안은 날짜별로 자동 저장됩니다. 저장 버튼을 누르지 않아도 브라우저를 다시 열면 임시 초안을 복원합니다.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <nav>
+      <button class="nav-btn active" id="nav-home" data-view="home" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+        <span>작성</span>
+      </button>
+      <button class="nav-btn" id="nav-explore" data-view="explore" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        <span>탐색</span>
+      </button>
+      <button class="nav-btn" id="nav-cal" data-view="calendar" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+        <span>달력</span>
+      </button>
+      <button class="nav-btn" id="nav-summary" data-view="summary" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10"></path><path d="M12 20V4"></path><path d="M6 20v-6"></path></svg>
+        <span>요약</span>
+      </button>
+      <button class="nav-btn" id="nav-settings" data-view="settings" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.65 1.65 0 0 0 15 19.4a1.65 1.65 0 0 0-1 .6 1.65 1.65 0 0 0-.33 1V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1-.6 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-.6-1 1.65 1.65 0 0 0-1-.33H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0 .6-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-.6 1.65 1.65 0 0 0 .33-1V3a2 2 0 1 1 4 0v.09A1.65 1.65 0 0 0 15 4.6a1.65 1.65 0 0 0 1 .6 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.24.31.44.65.6 1 .11.32.16.65.16 1s-.05.68-.16 1c-.16.35-.36.69-.6 1z"></path></svg>
+        <span>설정</span>
+      </button>
+    </nav>
+
+    <div class="toast" id="toast"></div>
+
+    <!-- 일기 상세 모달 -->
+    <div class="modal-backdrop" id="entry-modal">
+      <div class="modal-card">
+        <div class="modal-head">
+          <div class="modal-title" id="modal-title">기록 상세</div>
+          <button class="icon-btn" id="modal-close-btn" type="button" aria-label="닫기">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        </div>
+        <div id="modal-body"></div>
+      </div>
+    </div>
+
+    <!-- 보이스 일기 모달 -->
+    <div class="modal-backdrop" id="voice-modal">
+      <div class="modal-card" style="max-width:520px">
+        <div class="modal-head">
+          <div class="modal-title">🎙️ 보이스 일기</div>
+          <button class="icon-btn" id="voice-modal-close" type="button" aria-label="닫기">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        </div>
+        <div class="voice-status" id="voice-status">
+          <span class="rec-dot"></span> 듣고 있어요...
+        </div>
+        <div class="voice-transcript" id="voice-transcript"><span class="voice-interim">여기에 인식된 내용이 표시됩니다...</span></div>
+        <p class="voice-hint">날짜와 오늘의 일들을 자유롭게 말씀하세요.<br>예: "오늘 5월 7일, 친구를 만났어. 커피도 마셨고 저녁엔 독서했어."</p>
+        <div style="display:flex;gap:10px">
+          <button class="ghost-btn" id="voice-cancel-btn" type="button" style="flex:1">취소</button>
+          <button class="solid-btn" id="voice-done-btn" type="button" style="flex:2;padding:12px">
+            완료 · 일기로 변환
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const ENTRY_KEY = "diary-app-entries-v2";
+    const LEGACY_ENTRY_KEY = "diary-app-entries";
+    const DRAFT_KEY = "diary-app-drafts-v1";
+    const THEME_KEY = "diary-app-theme";
+    const FIREBASE_IMPORT_KEY = "diary-app-firebase-imported-v1";
+    const CLAUDE_KEY_STORAGE = "diary-app-claude-key";
+    const VOICE_OPTION_KEY = "diary-app-voice-enabled";
+
+    const FIREBASE_CONFIG = {
+      apiKey: "AIzaSyBHxd2JnEl-EuMWZGSHfaSKJtZ5Lsg24Dg",
+      authDomain: "daily-dairy-c6e5a.firebaseapp.com",
+      projectId: "daily-dairy-c6e5a",
+      storageBucket: "daily-dairy-c6e5a.firebasestorage.app",
+      messagingSenderId: "888823431115",
+      appId: "1:888823431115:web:e1d429ca9b7aae0e56804e"
+    };
+    const FIREBASE_COLLECTION = "entries";
+    const EMOTIONS = ["기쁨","감사","평온","불안","피곤","슬픔","성취감","외로움"];
+    const STOP_WORDS = new Set(["그리고","하지만","오늘","정말","조금","너무","그냥","에서","에게","이제","다시","했다","했다는","했다가","같다","있다","했다며","위해"]);
+    const FIELD_PLACEHOLDERS = ["오늘 감사했던 일은?","오늘 배운 것은?","내일 하고 싶은 일은?","기억에 남은 대화는?","오늘 가장 강했던 순간은?"];
+
+    const toDateStr = (date) => {
+      const y = date.getFullYear();
+      const m = String(date.getMonth()+1).padStart(2,"0");
+      const d = String(date.getDate()).padStart(2,"0");
+      return `${y}-${m}-${d}`;
+    };
+    const formatKoDate = (v) => { const [y,m,d] = v.split("-").map(Number); return `${y}년 ${m}월 ${d}일`; };
+    const escapeHtml = (v="") => v.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/\n/g,"<br>");
+    const formatDateTime = (v) => {
+      if (!v) return "저장 기록 없음";
+      const d = new Date(v);
+      return `${d.getMonth()+1}월 ${d.getDate()}일 ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
+    };
+    const getIntensityLabel = (v) => ["아주 약함","약함","보통","강함","매우 강함"][v-1]||"보통";
+
+    const migrateEntry = (date, entry) => {
+      if (!entry) return null;
+      if (Array.isArray(entry.items)) return { id:entry.id||date, date, items:entry.items.filter(Boolean), images:entry.images||[], emotions:Array.isArray(entry.emotions)?entry.emotions.filter(Boolean):[], intensity:entry.intensity||3, createdAt:entry.createdAt||entry.updatedAt||new Date().toISOString(), updatedAt:entry.updatedAt||entry.createdAt||new Date().toISOString() };
+      const items = [entry.item1,entry.item2,entry.item3].filter(Boolean);
+      return { id:date, date, items, images:[], emotions:Array.isArray(entry.emotions)?entry.emotions.filter(Boolean):[], intensity:entry.intensity||3, createdAt:entry.createdAt||entry.updatedAt||new Date().toISOString(), updatedAt:entry.updatedAt||entry.createdAt||new Date().toISOString() };
+    };
+
+    const loadEntries = () => {
+      const raw = localStorage.getItem(ENTRY_KEY) || localStorage.getItem(LEGACY_ENTRY_KEY);
+      if (!raw) return {};
+      try {
+        const parsed = JSON.parse(raw);
+        const migrated = {};
+        Object.entries(parsed).forEach(([date,entry]) => { const n=migrateEntry(date,entry); if(n) migrated[date]=n; });
+        return migrated;
+      } catch { return {}; }
+    };
+    const loadDrafts = () => { try { return JSON.parse(localStorage.getItem(DRAFT_KEY)||"{}"); } catch { return {}; } };
+
+    let firebaseModuleCache, firebaseDbPromise;
+    const loadFirebaseModules = async () => {
+      if (firebaseModuleCache) return firebaseModuleCache;
+      const [{ initializeApp,getApp,getApps },{ getFirestore,collection,getDocs,orderBy,query,doc,setDoc,deleteDoc }] = await Promise.all([
+        import("https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"),
+        import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js")
+      ]);
+      firebaseModuleCache = { initializeApp,getApp,getApps,getFirestore,collection,getDocs,orderBy,query,doc,setDoc,deleteDoc };
+      return firebaseModuleCache;
+    };
+    const getFirebaseDb = async () => {
+      if (firebaseDbPromise) return firebaseDbPromise;
+      firebaseDbPromise = (async () => {
+        const { initializeApp,getApp,getApps,getFirestore } = await loadFirebaseModules();
+        const app = getApps().some(a=>a.name==="legacy-diary-import") ? getApp("legacy-diary-import") : initializeApp(FIREBASE_CONFIG,"legacy-diary-import");
+        return getFirestore(app);
+      })();
+      return firebaseDbPromise;
+    };
+
+    const persistEntries = () => localStorage.setItem(ENTRY_KEY, JSON.stringify(entries));
+    const persistDrafts = () => localStorage.setItem(DRAFT_KEY, JSON.stringify(drafts));
+
+    const countStreak = () => {
+      let streak=0, cursor=new Date();
+      while(true) { const k=toDateStr(cursor); if(entries[k]){streak++;cursor.setDate(cursor.getDate()-1);}else break; }
+      return streak;
+    };
+    const entriesToArray = () => Object.values(entries).sort((a,b)=>b.date.localeCompare(a.date));
+    const getTopEmotion = (items) => {
+      const c={};
+      items.forEach(e=>(e.emotions||[]).forEach(em=>c[em]=(c[em]||0)+1));
+      const [em]= Object.entries(c).sort((a,b)=>b[1]-a[1])[0]||[];
+      return em||"아직 없음";
+    };
+    const tokenize = (items) => {
+      const c={};
+      items.forEach(e=>e.items.forEach(t=>t.toLowerCase().replace(/[^0-9a-zA-Z가-힣\s]/g," ").split(/\s+/).filter(tk=>tk.length>=2&&!STOP_WORDS.has(tk)).forEach(tk=>c[tk]=(c[tk]||0)+1)));
+      return c;
+    };
+    const topKeywords = (items,limit=6) => Object.entries(tokenize(items)).sort((a,b)=>b[1]-a[1]).slice(0,limit).map(([word,count])=>({word,count}));
+    const mergeEntryMaps = (remote,local) => {
+      const merged={...remote};
+      Object.entries(local).forEach(([date,le])=>{
+        const re=merged[date];
+        if(!re){merged[date]=le;return;}
+        const lu=new Date(le.updatedAt||le.createdAt||0).getTime();
+        const ru=new Date(re.updatedAt||re.createdAt||0).getTime();
+        merged[date]=lu>=ru?le:re;
+      });
+      return merged;
+    };
+    const toFirebaseEntry = (entry) => ({ date:entry.date, item1:entry.items[0]||"", item2:entry.items[1]||"", item3:entry.items[2]||"", items:entry.items, emotions:entry.emotions||[], intensity:entry.intensity||3, created_at:entry.createdAt, updated_at:entry.updatedAt });
+
+    // ── State ──────────────────────────────────────────────────────────────
+    let entries = loadEntries();
+    let drafts = loadDrafts();
+    let currentDate = toDateStr(new Date());
+    let currentView = "home";
+    let calendarYear = new Date().getFullYear();
+    let calendarMonth = new Date().getMonth();
+    let draftItems = ["","",""];
+    let draftImages = [];
+    let selectedEmotions = [];
+    let emotionIntensity = 3;
+
+    // ── DOM refs ───────────────────────────────────────────────────────────
+    const dateInput = document.getElementById("date-input");
+    const fieldsEl = document.getElementById("fields");
+    const emotionGridEl = document.getElementById("emotion-grid");
+    const intensityEl = document.getElementById("emotion-intensity");
+    const intensityLabelEl = document.getElementById("emotion-intensity-label");
+    const saveStatusEl = document.getElementById("save-status");
+    const saveBtn = document.getElementById("save-btn");
+    const saveLabel = document.getElementById("save-label");
+    const quickStatsEl = document.getElementById("quick-stats");
+    const todayPanelEl = document.getElementById("today-panel");
+    const anniversaryPanelEl = document.getElementById("anniversary-panel");
+    const randomPanelEl = document.getElementById("random-panel");
+    const searchResultsEl = document.getElementById("search-results");
+    const searchQueryEl = document.getElementById("search-query");
+    const searchFromEl = document.getElementById("search-from");
+    const searchToEl = document.getElementById("search-to");
+    const searchEmotionEl = document.getElementById("search-emotion");
+    const summaryRangeEl = document.getElementById("summary-range");
+    const summaryFromEl = document.getElementById("summary-from");
+    const summaryToEl = document.getElementById("summary-to");
+    const summaryTopEl = document.getElementById("summary-top");
+    const summaryDetailEl = document.getElementById("summary-detail");
+    const settingsStatusEl = document.getElementById("settings-status");
+    const entryModalEl = document.getElementById("entry-modal");
+    const modalTitleEl = document.getElementById("modal-title");
+    const modalBodyEl = document.getElementById("modal-body");
+    const aiPanelEl = document.getElementById("ai-panel");
+    const voiceFabBtn = document.getElementById("voice-fab-btn");
+    const voiceModalEl = document.getElementById("voice-modal");
+    const voiceStatusEl = document.getElementById("voice-status");
+    const voiceTranscriptEl = document.getElementById("voice-transcript");
+    const voiceToggleEl = document.getElementById("voice-toggle");
+
+    // ── Utilities ──────────────────────────────────────────────────────────
+    const toast = (message) => {
+      const el = document.getElementById("toast");
+      el.textContent = message; el.classList.add("show");
+      window.clearTimeout(toast.timer);
+      toast.timer = window.setTimeout(()=>el.classList.remove("show"), 2500);
+    };
+    const setHeaderDate = () => {
+      const now=new Date(), days=["일","월","화","수","목","금","토"];
+      document.getElementById("hdr-date").textContent=`${now.getMonth()+1}월 ${now.getDate()}일 ${days[now.getDay()]}요일`;
+    };
+    const setThemeIcon = (t) => { document.getElementById("ico-sun").style.display=t==="dark"?"block":"none"; document.getElementById("ico-moon").style.display=t==="light"?"block":"none"; };
+    const applyTheme = (t) => { document.documentElement.setAttribute("data-theme",t); localStorage.setItem(THEME_KEY,t); setThemeIcon(t); };
+    const setSaveStatus = (text) => { saveStatusEl.textContent=text; };
+    const syncEmotionIntensityLabel = () => { intensityLabelEl.textContent=`${emotionIntensity} / 5`; intensityLabelEl.title=getIntensityLabel(emotionIntensity); };
+
+    // ── Image compression ──────────────────────────────────────────────────
+    const compressImage = (file) => new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const maxW = 900;
+          const scale = img.width > maxW ? maxW / img.width : 1;
+          const canvas = document.createElement("canvas");
+          canvas.width = img.width * scale;
+          canvas.height = img.height * scale;
+          canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+          resolve(canvas.toDataURL("image/jpeg", 0.72));
+        };
+        img.onerror = reject;
+        img.src = e.target.result;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+
+    const attachImage = (index) => {
+      const input = document.createElement("input");
+      input.type = "file"; input.accept = "image/*";
+      input.onchange = async () => {
+        const file = input.files[0];
+        if (!file) return;
+        try {
+          const b64 = await compressImage(file);
+          while (draftImages.length <= index) draftImages.push(null);
+          draftImages[index] = b64;
+          renderFields();
+          saveDraft();
+          setSaveStatus("사진이 추가되었습니다.");
+        } catch { toast("이미지를 처리하지 못했어요"); }
+      };
+      input.click();
+    };
+
+    // ── Draft management ───────────────────────────────────────────────────
+    const saveDraft = () => {
+      const items = draftItems.map(i=>i.trim()).filter(Boolean);
+      if (!items.length && !selectedEmotions.length) { delete drafts[currentDate]; persistDrafts(); return; }
+      drafts[currentDate] = { date:currentDate, items, images:[...draftImages], emotions:[...selectedEmotions], intensity:emotionIntensity, updatedAt:new Date().toISOString() };
+      persistDrafts();
+    };
+
+    const ensureMinFields = () => { if (!draftItems.length) draftItems=[""];};
+
+    // ── Render fields ──────────────────────────────────────────────────────
+    const renderFields = () => {
+      ensureMinFields();
+      fieldsEl.innerHTML = draftItems.map((value, index) => {
+        const imgData = draftImages[index] || null;
+        return `
+          <div class="item-field">
+            <div class="field-head">
+              <div class="field-label"><span class="field-num">${index+1}</span> ${index+1}번째 기억</div>
+              <div class="field-actions">
+                <button class="img-btn" type="button" data-img-index="${index}" title="사진 첨부">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                </button>
+                <button class="mini-btn" type="button" data-remove-index="${index}" ${draftItems.length===1?"disabled":""}>삭제</button>
+              </div>
+            </div>
+            <textarea class="mem-input" data-item-index="${index}" rows="3" placeholder="${FIELD_PLACEHOLDERS[index]||"오늘 떠오르는 기억을 적어보세요"}">${value}</textarea>
+            ${imgData ? `<div class="photo-thumb"><img src="${imgData}" alt="첨부 사진" /><button class="photo-remove" type="button" data-remove-img="${index}" title="사진 삭제">×</button></div>` : ""}
+          </div>`;
+      }).join("");
+
+      fieldsEl.querySelectorAll("[data-item-index]").forEach(el => {
+        el.addEventListener("input", (e) => { draftItems[Number(e.target.dataset.itemIndex)]=e.target.value; saveDraft(); setSaveStatus("작성 중입니다. 저장해 주세요."); });
+      });
+      fieldsEl.querySelectorAll("[data-remove-index]").forEach(btn => {
+        btn.addEventListener("click", () => { const i=Number(btn.dataset.removeIndex); if(draftItems.length===1)return; draftItems.splice(i,1); draftImages.splice(i,1); renderFields(); saveDraft(); setSaveStatus("항목이 삭제되었습니다."); });
+      });
+      fieldsEl.querySelectorAll("[data-img-index]").forEach(btn => {
+        btn.addEventListener("click", () => attachImage(Number(btn.dataset.imgIndex)));
+      });
+      fieldsEl.querySelectorAll("[data-remove-img]").forEach(btn => {
+        btn.addEventListener("click", () => { const i=Number(btn.dataset.removeImg); draftImages[i]=null; renderFields(); saveDraft(); });
+      });
+    };
+
+    const renderEmotionGrid = () => {
+      emotionGridEl.innerHTML = EMOTIONS.map(e => `<button class="emotion-chip ${selectedEmotions.includes(e)?"active":""}" data-emotion="${e}" type="button">${e}</button>`).join("");
+      emotionGridEl.querySelectorAll("[data-emotion]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const e=btn.dataset.emotion;
+          selectedEmotions=selectedEmotions.includes(e)?selectedEmotions.filter(x=>x!==e):[...selectedEmotions,e];
+          renderEmotionGrid(); saveDraft(); setSaveStatus("감정 선택이 변경되었습니다.");
+        });
+      });
+    };
+
+    const fillForm = (entry) => {
+      const draft = drafts[currentDate];
+      const source = draft || entry;
+      draftItems = source?.items?.length ? [...source.items] : ["","",""];
+      draftImages = source?.images ? [...source.images] : [];
+      selectedEmotions = source?.emotions ? [...source.emotions] : [];
+      emotionIntensity = source?.intensity || 3;
+      intensityEl.value = String(emotionIntensity);
+      renderFields(); renderEmotionGrid(); syncEmotionIntensityLabel();
+      aiPanelEl.innerHTML = "";
+      if (draft && !entry) setSaveStatus(`임시 초안 복원됨: ${formatDateTime(draft.updatedAt)}`);
+      else if (draft && entry) setSaveStatus(`임시 초안 있음: ${formatDateTime(draft.updatedAt)}`);
+      else setSaveStatus(entry?.updatedAt ? `마지막 저장: ${formatDateTime(entry.updatedAt)}` : "아직 저장되지 않았습니다.");
+    };
+
+    // ── Render helpers ─────────────────────────────────────────────────────
+    const renderQuickStats = () => {
+      const list=entriesToArray();
+      quickStatsEl.innerHTML = `
+        <div class="stat-chip"><strong>${list.length}</strong><span>전체 기록 수</span></div>
+        <div class="stat-chip"><strong>${countStreak()}일</strong><span>현재 연속 기록</span></div>
+        <div class="stat-chip"><strong>${getTopEmotion(list)}</strong><span>가장 자주 느낀 감정</span></div>`;
+    };
+
+    const renderEntryCard = (entry, options={}) => {
+      const {titleBadge="오늘",badgeClass="badge-today",deletable=false,subtitle=formatKoDate(entry.date)} = options;
+      const imgs = entry.images || [];
+      return `
+        <div class="entry-card">
+          <div class="entry-header">
+            <div>
+              <div class="entry-meta">
+                <span class="badge ${badgeClass}">${titleBadge}</span>
+                <span class="entry-date-str">${subtitle}</span>
+                ${(entry.emotions||[]).map(e=>`<span class="badge badge-emo">${e}</span>`).join("")}
+              </div>
+            </div>
+            ${deletable?`<button class="del-btn" type="button" data-delete="${entry.date}" title="삭제"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg></button>`:""}
+          </div>
+          <div class="entry-body">
+            ${entry.items.map((text,i)=>`
+              <div class="entry-row">
+                <span class="entry-n">${i+1}</span>
+                <div style="flex:1">
+                  <p class="entry-text">${escapeHtml(text)}</p>
+                  ${imgs[i]?`<img class="entry-img" src="${imgs[i]}" alt="첨부 사진" />`:""}
+                </div>
+              </div>`).join("")}
+          </div>
+          <div class="entry-footer">
+            <span class="tag-chip">감정 강도 ${entry.intensity||3}/5</span>
+            <span class="tag-chip">업데이트 ${formatDateTime(entry.updatedAt)}</span>
+          </div>
+        </div>`;
+    };
+
+    const openEntryModal = (entry, title="기록 상세") => {
+      modalTitleEl.textContent=title;
+      modalBodyEl.innerHTML=renderEntryCard(entry,{titleBadge:"기록 상세",badgeClass:"badge-past",subtitle:formatKoDate(entry.date)});
+      entryModalEl.classList.add("open");
+    };
+    const closeEntryModal = () => entryModalEl.classList.remove("open");
+
+    const bindTodayDelete = () => {
+      todayPanelEl.querySelectorAll("[data-delete]").forEach(btn=>{
+        btn.addEventListener("click", async () => {
+          if (!window.confirm("이 일기를 삭제하시겠습니까?")) return;
+          const date=btn.dataset.delete;
+          delete entries[date]; persistEntries(); delete drafts[date]; persistDrafts();
+          try { await deleteEntryFromFirebase(date); } catch(err) { console.error(err); toast("로컬에서는 삭제했지만 Firebase 삭제는 실패했어요"); }
+          fillForm(null); renderAll(); toast("삭제되었어요");
+        });
+      });
+    };
+
+    const getSameDayPastEntries = (dateStr) => {
+      const [y,m,d]=dateStr.split("-").map(Number);
+      return entriesToArray().filter(e=>{ const [ey,em,ed]=e.date.split("-").map(Number); return ey<y&&em===m&&ed===d; });
+    };
+
+    const renderTodayPanels = () => {
+      const todayEntry=entries[currentDate];
+      const pastEntries=getSameDayPastEntries(currentDate);
+      if (todayEntry) {
+        todayPanelEl.innerHTML=`<div class="section-label">오늘 기록</div>${renderEntryCard(todayEntry,{deletable:true,titleBadge:"오늘",badgeClass:"badge-today"})}`;
+      } else {
+        todayPanelEl.innerHTML=`<div class="section-label">오늘 기록</div><div class="empty"><div class="empty-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"></path></svg></div><div class="empty-title">오늘 기록이 아직 없습니다</div><div class="empty-desc">기억 한 줄만 적어도 저장할 수 있습니다.</div></div>`;
+      }
+      if (pastEntries.length) {
+        anniversaryPanelEl.innerHTML=`<div class="section-label">같은 날의 기록</div><div class="stack">${pastEntries.slice(0,3).map(e=>{const ago=new Date(currentDate).getFullYear()-new Date(e.date).getFullYear();return renderEntryCard(e,{titleBadge:`${ago}년 전 오늘`,badgeClass:"badge-past"});}).join("")}</div>`;
+      } else {
+        anniversaryPanelEl.innerHTML=`<div class="section-label">같은 날의 기록</div><div class="empty"><div class="empty-ico">⏳</div><div class="empty-title">아직 같은 날의 회고가 없습니다</div><div class="empty-desc">꾸준히 기록하면 시간이 지난 뒤 같은 날짜를 다시 만날 수 있습니다.</div></div>`;
+      }
+      bindTodayDelete();
+    };
+
+    const highlightText = (text, query) => {
+      if (!query) return escapeHtml(text);
+      const eq=query.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
+      return escapeHtml(text).replace(new RegExp(eq,"gi"),m=>`<mark>${m}</mark>`);
+    };
+
+    const getFilteredEntries = () => {
+      const query=searchQueryEl.value.trim().toLowerCase();
+      const from=searchFromEl.value, to=searchToEl.value, emotion=searchEmotionEl.value;
+      return entriesToArray().filter(e=>{
+        if(from&&e.date<from)return false; if(to&&e.date>to)return false;
+        if(emotion&&!(e.emotions||[]).includes(emotion))return false;
+        if(!query)return true;
+        return e.items.some(i=>i.toLowerCase().includes(query));
+      });
+    };
+
+    const renderSearchResults = () => {
+      const query=searchQueryEl.value.trim();
+      const results=getFilteredEntries();
+      if (!results.length) { searchResultsEl.innerHTML=`<div class="empty"><div class="empty-ico">🔎</div><div class="empty-title">조건에 맞는 기록이 없습니다</div><div class="empty-desc">검색어를 줄이거나 날짜/감정 필터를 조정해보세요.</div></div>`; return; }
+      searchResultsEl.innerHTML=results.map(e=>`<div class="result-card"><h4>${formatKoDate(e.date)}</h4><p>${e.items.map(i=>highlightText(i,query)).join("<br><br>")}</p><div class="entry-footer" style="padding:12px 0 0">${(e.emotions||[]).map(em=>`<span class="tag-chip">${em}</span>`).join("")}<span class="tag-chip">강도 ${e.intensity}/5</span></div><div class="result-actions"><button class="ghost-btn" type="button" data-open-entry="${e.date}">상세 보기</button></div></div>`).join("");
+      searchResultsEl.querySelectorAll("[data-open-entry]").forEach(btn=>{
+        btn.addEventListener("click",()=>{ const e=entries[btn.dataset.openEntry]; if(e)openEntryModal(e,formatKoDate(e.date)); });
+      });
+    };
+
+    const renderRandomEntry = (entry) => {
+      if (!entry) { randomPanelEl.innerHTML=`<div class="section-label">랜덤 회고</div><div class="empty"><div class="empty-ico">🎲</div><div class="empty-title">아직 랜덤으로 볼 기록이 없습니다</div></div>`; return; }
+      randomPanelEl.innerHTML=`<div class="section-label">랜덤 회고</div>${renderEntryCard(entry,{titleBadge:"랜덤 기록",badgeClass:"badge-past"})}<div class="result-actions"><button class="ghost-btn" id="random-detail-btn" type="button">원문 자세히 보기</button></div>`;
+      document.getElementById("random-detail-btn").addEventListener("click",()=>openEntryModal(entry,`랜덤 회고 · ${formatKoDate(entry.date)}`));
+    };
+
+    const pickRandomEntry = () => {
+      const c=getFilteredEntries();
+      if(!c.length){renderRandomEntry(null);toast("랜덤으로 뽑을 기록이 없습니다");return;}
+      renderRandomEntry(c[Math.floor(Math.random()*c.length)]);
+    };
+
+    const getSummaryEntries = () => {
+      const range=summaryRangeEl.value; const today=new Date();
+      let from=summaryFromEl.value, to=summaryToEl.value;
+      if(range!=="custom"){const s=new Date(today);s.setDate(today.getDate()-(Number(range)-1));from=toDateStr(s);to=toDateStr(today);summaryFromEl.value=from;summaryToEl.value=to;}
+      return entriesToArray().filter(e=>{if(from&&e.date<from)return false;if(to&&e.date>to)return false;return true;});
+    };
+
+    const renderSummary = () => {
+      const list=getSummaryEntries();
+      const topEmotion=getTopEmotion(list), keywords=topKeywords(list);
+      const emotionCounts={};
+      list.forEach(e=>(e.emotions||[]).forEach(em=>emotionCounts[em]=(emotionCounts[em]||0)+1));
+      const maxEC=Math.max(...Object.values(emotionCounts),1);
+      const totalItems=list.reduce((s,e)=>s+e.items.length,0);
+      const avgIntensity=list.length?(list.reduce((s,e)=>s+(e.intensity||0),0)/list.length).toFixed(1):"0.0";
+      const quotes=list.flatMap(e=>e.items.map(t=>({date:e.date,text:t}))).slice(0,3);
+      summaryTopEl.innerHTML=`<div class="summary-metric"><span>기록 수</span><strong>${list.length}</strong></div><div class="summary-metric"><span>총 기억 항목</span><strong>${totalItems}</strong></div><div class="summary-metric"><span>평균 감정 강도</span><strong>${avgIntensity}</strong></div>`;
+      summaryDetailEl.innerHTML=`
+        <div class="summary-section"><h4>가장 많이 등장한 감정</h4><div class="summary-list"><span class="tag-chip">${topEmotion}</span>${list.length?`<span class="tag-chip">분석 기간 ${summaryFromEl.value} ~ ${summaryToEl.value}</span>`:""}</div></div>
+        <div class="summary-section"><h4>자주 나온 단어</h4><div class="summary-list">${keywords.length?keywords.map(k=>`<span class="tag-chip">${k.word} ${k.count}회</span>`).join(""):'<span class="tag-chip">아직 분석할 단어가 없습니다</span>'}</div></div>
+        <div class="summary-section"><h4>감정 분포</h4><div class="emotion-bars">${Object.keys(emotionCounts).length?Object.entries(emotionCounts).sort((a,b)=>b[1]-a[1]).map(([em,cnt])=>`<div class="emotion-bar-row"><span>${em}</span><div class="emotion-bar-track"><div class="emotion-bar-fill" style="width:${(cnt/maxEC)*100}%"></div></div><strong>${cnt}</strong></div>`).join(""):'<div class="quote-item">아직 감정 데이터가 부족합니다.</div>'}</div></div>
+        <div class="summary-section"><h4>대표 문장</h4><div class="quote-list">${quotes.length?quotes.map(q=>`<div class="quote-item">${escapeHtml(q.text)}<br><small>${formatKoDate(q.date)}</small></div>`).join(""):'<div class="quote-item">선택한 기간의 기록이 없습니다.</div>'}</div></div>`;
+    };
+
+    const renderSettingsStatus = () => {
+      const ec=Object.keys(entries).length, dc=Object.keys(drafts).length;
+      const ls=entriesToArray()[0]?.updatedAt;
+      const ld=Object.values(drafts).sort((a,b)=>(b.updatedAt||"").localeCompare(a.updatedAt||""))[0]?.updatedAt;
+      const fi=localStorage.getItem(FIREBASE_IMPORT_KEY)==="done";
+      const hasKey=!!localStorage.getItem(CLAUDE_KEY_STORAGE);
+      settingsStatusEl.innerHTML=`
+        <div class="quote-item">저장된 기록 수: ${ec}개</div>
+        <div class="quote-item">임시 초안 수: ${dc}개</div>
+        <div class="quote-item">마지막 저장 기록: ${ls?formatDateTime(ls):"없음"}</div>
+        <div class="quote-item">마지막 임시 초안: ${ld?formatDateTime(ld):"없음"}</div>
+        <div class="quote-item">Firebase 가져오기: ${fi?"완료":"아직 안 함"}</div>
+        <div class="quote-item">Claude API 키: ${hasKey?"등록됨":"미등록"}</div>`;
+    };
+
+    // ── Firebase ───────────────────────────────────────────────────────────
+    const importLegacyFirebaseEntries = async ({silent=false}={}) => {
+      try {
+        if(!silent)setSaveStatus("기존 Firebase 데이터를 가져오는 중입니다...");
+        const {collection,getDocs,orderBy,query}=await loadFirebaseModules();
+        const db=await getFirebaseDb();
+        const snapshot=await getDocs(query(collection(db,FIREBASE_COLLECTION),orderBy("date")));
+        const imp={};
+        snapshot.forEach(ds=>{ const n=migrateEntry(ds.id,ds.data()); if(n)imp[ds.id]=n; });
+        entries=mergeEntryMaps(imp,entries); persistEntries(); localStorage.setItem(FIREBASE_IMPORT_KEY,"done");
+        fillForm(entries[currentDate]||null); renderAll();
+        if(!silent)toast(`${Object.keys(imp).length}개의 Firebase 기록을 가져왔어요`);
+      } catch(err) { console.error(err); if(!silent){toast("Firebase 데이터를 가져오지 못했어요");setSaveStatus("Firebase 가져오기에 실패했습니다.");} }
+    };
+    const syncEntryToFirebase = async (entry) => {
+      const {doc,setDoc}=await loadFirebaseModules(); const db=await getFirebaseDb();
+      await setDoc(doc(db,FIREBASE_COLLECTION,entry.date),toFirebaseEntry(entry));
+    };
+    const deleteEntryFromFirebase = async (date) => {
+      const {doc,deleteDoc}=await loadFirebaseModules(); const db=await getFirebaseDb();
+      await deleteDoc(doc(db,FIREBASE_COLLECTION,date));
+    };
+
+    // ── Calendar ───────────────────────────────────────────────────────────
+    const renderCalendar = () => {
+      document.getElementById("cal-label").textContent=`${calendarYear}년 ${calendarMonth+1}월`;
+      const fd=new Date(calendarYear,calendarMonth,1).getDay();
+      const td=new Date(calendarYear,calendarMonth+1,0).getDate();
+      const pt=new Date(calendarYear,calendarMonth,0).getDate();
+      const today=toDateStr(new Date());
+      const headers=["일","월","화","수","목","금","토"];
+      const dwe=new Set(Object.keys(entries).filter(d=>{const[y,m]=d.split("-").map(Number);return y===calendarYear&&m===calendarMonth+1;}).map(d=>Number(d.split("-")[2])));
+      let html=headers.map(d=>`<div class="cal-hdr">${d}</div>`).join("");
+      for(let i=fd-1;i>=0;i--)html+=`<div class="cal-day dim">${pt-i}</div>`;
+      for(let day=1;day<=td;day++){
+        const d=`${calendarYear}-${String(calendarMonth+1).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
+        const cls=["cal-day",d===today?"today":"",dwe.has(day)?"has-entry":""].filter(Boolean).join(" ");
+        html+=`<button class="${cls}" type="button" data-cal-date="${d}">${day}</button>`;
+      }
+      const rem=(fd+td)%7, fill=rem===0?0:7-rem;
+      for(let day=1;day<=fill;day++)html+=`<div class="cal-day dim">${day}</div>`;
+      const grid=document.getElementById("cal-grid");
+      grid.innerHTML=html;
+      grid.querySelectorAll("[data-cal-date]").forEach(btn=>{
+        btn.addEventListener("click",()=>{ currentDate=btn.dataset.calDate; dateInput.value=currentDate; fillForm(entries[currentDate]||null); switchView("home"); });
+      });
+    };
+
+    const renderEmotionFilterOptions = () => {
+      searchEmotionEl.innerHTML=`<option value="">감정 전체</option>${EMOTIONS.map(e=>`<option value="${e}">${e}</option>`).join("")}`;
+    };
+
+    const renderAll = () => {
+      renderQuickStats(); renderTodayPanels(); renderSearchResults();
+      renderRandomEntry(entriesToArray()[0]||null); renderCalendar(); renderSummary(); renderSettingsStatus();
+    };
+
+    const switchView = (view) => {
+      currentView=view;
+      document.querySelectorAll(".view").forEach(s=>s.classList.toggle("active",s.id===`view-${view}`));
+      document.querySelectorAll(".nav-btn").forEach(b=>b.classList.toggle("active",b.dataset.view===view));
+      if(view==="calendar")renderCalendar();
+      if(view==="explore")renderSearchResults();
+      if(view==="summary")renderSummary();
+      if(view==="settings")renderSettingsStatus();
+    };
+
+    // ── AI analysis (Claude Haiku) ─────────────────────────────────────────
+    const callClaudeHaiku = async (userPrompt) => {
+      const apiKey = localStorage.getItem(CLAUDE_KEY_STORAGE);
+      if (!apiKey) { toast("설정에서 Claude API 키를 먼저 입력해주세요"); switchView("settings"); throw new Error("no_key"); }
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type":"application/json", "x-api-key":apiKey, "anthropic-version":"2023-06-01", "anthropic-dangerous-allow-browser":"true" },
+        body: JSON.stringify({ model:"claude-haiku-4-5-20251001", max_tokens:600, messages:[{role:"user",content:userPrompt}] })
+      });
+      if (!res.ok) { const t=await res.text(); throw new Error(t); }
+      const data = await res.json();
+      return data.content[0].text;
+    };
+
+    const analyzeWithAI = async () => {
+      const items = draftItems.map(i=>i.trim()).filter(Boolean);
+      if (!items.length) { toast("먼저 일기를 작성해주세요"); return; }
+      aiPanelEl.innerHTML = `<div class="summary-section" style="display:flex;align-items:center;justify-content:center;padding:20px"><span class="spin" style="border-top-color:var(--accent);border-color:var(--accent-soft)"></span></div>`;
+      try {
+        const prompt = `다음은 오늘의 일기 내용입니다:\n${items.map((t,i)=>`${i+1}. ${t}`).join("\n")}\n선택한 감정: ${selectedEmotions.join(", ")||"없음"}\n\n이 일기를 바탕으로 아래 세 가지를 간결하게 한국어로 답해주세요:\n1. 오늘의 감정 상태 (1-2문장)\n2. 긍정적인 부분 한 가지\n3. 내일을 위한 따뜻한 조언 한 가지`;
+        const text = await callClaudeHaiku(prompt);
+        aiPanelEl.innerHTML = `<div class="summary-section"><h4>🤖 AI 감정 분석</h4><div class="quote-list">${text.split("\n").filter(Boolean).map(line=>`<div class="quote-item">${escapeHtml(line)}</div>`).join("")}</div></div>`;
+      } catch(err) {
+        aiPanelEl.innerHTML = "";
+        if (err.message !== "no_key") toast("AI 분석 실패: " + (err.message||"알 수 없는 오류"));
+      }
+    };
+
+    // ── Voice diary ────────────────────────────────────────────────────────
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let voiceRecognition = null;
+    let voiceFullText = "";
+    let voiceInterimText = "";
+
+    const openVoiceModal = () => {
+      if (!SpeechRecognition) { toast("이 브라우저는 음성 인식을 지원하지 않습니다 (Chrome 권장)"); return; }
+      voiceFullText = ""; voiceInterimText = "";
+      voiceTranscriptEl.innerHTML = `<span class="voice-interim">여기에 인식된 내용이 표시됩니다...</span>`;
+      voiceStatusEl.innerHTML = `<span class="rec-dot"></span> 듣고 있어요...`;
+      voiceModalEl.classList.add("open");
+      startVoiceRecognition();
+    };
+
+    const closeVoiceModal = () => {
+      voiceModalEl.classList.remove("open");
+      if (voiceRecognition) { voiceRecognition.stop(); voiceRecognition = null; }
+    };
+
+    const startVoiceRecognition = () => {
+      const rec = new SpeechRecognition();
+      rec.lang = "ko-KR"; rec.continuous = true; rec.interimResults = true;
+      rec.onresult = (event) => {
+        let final = "", interim = "";
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const t = event.results[i][0].transcript;
+          if (event.results[i].isFinal) final += t;
+          else interim += t;
+        }
+        voiceFullText += final;
+        voiceInterimText = interim;
+        voiceTranscriptEl.innerHTML = escapeHtml(voiceFullText) + (voiceInterimText ? `<span class="voice-interim"> ${escapeHtml(voiceInterimText)}</span>` : "");
+        voiceTranscriptEl.scrollTop = voiceTranscriptEl.scrollHeight;
+      };
+      rec.onerror = (e) => {
+        if (e.error === "no-speech") return;
+        voiceStatusEl.innerHTML = `⚠️ 오류: ${e.error}`;
+      };
+      rec.onend = () => {
+        if (voiceModalEl.classList.contains("open") && voiceRecognition) {
+          voiceRecognition = null;
+          const rec2 = new SpeechRecognition();
+          Object.assign(rec2, {lang:"ko-KR",continuous:true,interimResults:true});
+          rec2.onresult = rec.onresult; rec2.onerror = rec.onerror; rec2.onend = rec.onend;
+          try { rec2.start(); voiceRecognition = rec2; } catch(e) {}
+        }
+      };
+      rec.start();
+      voiceRecognition = rec;
+    };
+
+    const processVoiceDiary = async () => {
+      const transcript = (voiceFullText + voiceInterimText).trim();
+      if (!transcript) { toast("녹음된 내용이 없습니다"); return; }
+      closeVoiceModal();
+      setSaveStatus("🤖 AI가 일기를 분석 중입니다...");
+      const today = toDateStr(new Date());
+      try {
+        const prompt = `다음은 음성으로 녹음된 일기 내용입니다:\n"${transcript}"\n\n오늘 날짜: ${today}\n\n이 내용에서:\n1. 날짜를 파악하세요 (언급이 없으면 오늘 날짜 사용)\n2. 내용을 의미 있는 기억 단위로 2~5개로 나누세요. 각 항목은 하나의 사건/생각/감정입니다.\n\n반드시 다음 JSON만 응답하세요 (설명 없이):\n{"date":"YYYY-MM-DD","items":["기억1","기억2","기억3"]}`;
+        const text = await callClaudeHaiku(prompt);
+        const jsonMatch = text.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) throw new Error("파싱 실패");
+        const parsed = JSON.parse(jsonMatch[0]);
+        const targetDate = parsed.date || today;
+        const items = Array.isArray(parsed.items) && parsed.items.length ? parsed.items : [transcript];
+        currentDate = targetDate;
+        dateInput.value = currentDate;
+        draftItems = items;
+        draftImages = [];
+        renderFields();
+        renderEmotionGrid();
+        saveDraft();
+        renderTodayPanels();
+        setSaveStatus(`음성 일기 변환 완료 (${formatKoDate(targetDate)}). 확인 후 저장해주세요.`);
+        toast("음성 일기가 변환됐어요! 내용을 확인하고 저장해주세요.");
+      } catch(err) {
+        if (err.message === "no_key") {
+          draftItems = [transcript]; draftImages = [];
+          renderFields(); saveDraft();
+          setSaveStatus("API 키가 없어 원문으로 입력했습니다. 직접 나눠보세요.");
+          toast("API 키 없이 원문으로 입력했어요");
+        } else {
+          setSaveStatus("변환 실패. 원문으로 입력했습니다.");
+          draftItems = [transcript]; draftImages = [];
+          renderFields(); saveDraft();
+          toast("변환 실패 — 원문으로 입력했어요");
+        }
+      }
+    };
+
+    // ── Voice option toggle ────────────────────────────────────────────────
+    const applyVoiceOption = (enabled) => {
+      voiceFabBtn.classList.toggle("visible", enabled);
+      localStorage.setItem(VOICE_OPTION_KEY, enabled ? "1" : "0");
+      voiceToggleEl.checked = enabled;
+    };
+
+    voiceToggleEl.addEventListener("change", () => applyVoiceOption(voiceToggleEl.checked));
+    voiceFabBtn.addEventListener("click", openVoiceModal);
+
+    document.getElementById("voice-modal-close").addEventListener("click", closeVoiceModal);
+    document.getElementById("voice-cancel-btn").addEventListener("click", closeVoiceModal);
+    document.getElementById("voice-done-btn").addEventListener("click", processVoiceDiary);
+
+    // ── Settings listeners ─────────────────────────────────────────────────
+    document.getElementById("save-api-key-btn").addEventListener("click", () => {
+      const key = document.getElementById("claude-api-key").value.trim();
+      if (!key) { toast("API 키를 입력해주세요"); return; }
+      localStorage.setItem(CLAUDE_KEY_STORAGE, key);
+      document.getElementById("claude-api-key").value = "";
+      toast("API 키가 저장됐어요"); renderSettingsStatus();
+    });
+
+    // ── Core event listeners ───────────────────────────────────────────────
+    dateInput.value = currentDate;
+    dateInput.max = toDateStr(new Date());
+    dateInput.addEventListener("change", () => { currentDate=dateInput.value; fillForm(entries[currentDate]||null); renderTodayPanels(); });
+
+    document.getElementById("add-item-btn").addEventListener("click", () => { draftItems.push(""); renderFields(); saveDraft(); setSaveStatus("새 항목이 추가되었습니다."); });
+
+    intensityEl.addEventListener("input", (e) => { emotionIntensity=Number(e.target.value); syncEmotionIntensityLabel(); saveDraft(); setSaveStatus("감정 강도가 변경되었습니다."); });
+
+    saveBtn.addEventListener("click", () => {
+      const items=draftItems.map(i=>i.trim()).filter(Boolean);
+      if(!items.length){toast("최소 하나의 기억을 입력해주세요");return;}
+      saveBtn.disabled=true; saveLabel.innerHTML='<span class="spin"></span>';
+      window.setTimeout(async()=>{
+        const existing=entries[currentDate];
+        const nextEntry={id:currentDate,date:currentDate,items,images:[...draftImages],emotions:[...selectedEmotions],intensity:emotionIntensity,createdAt:existing?.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString()};
+        entries[currentDate]=nextEntry; persistEntries(); delete drafts[currentDate]; persistDrafts();
+        try { await syncEntryToFirebase(nextEntry); localStorage.setItem(FIREBASE_IMPORT_KEY,"done"); toast("일기가 저장되었어요"); }
+        catch(err) { console.error(err); toast("로컬에는 저장됐지만 Firebase 동기화는 실패했어요"); }
+        finally { fillForm(entries[currentDate]); renderAll(); saveBtn.disabled=false; saveLabel.textContent="일기 저장하기"; }
+      },180);
+    });
+
+    document.getElementById("ai-analyze-btn").addEventListener("click", analyzeWithAI);
+
+    document.getElementById("theme-btn").addEventListener("click",()=>{ const n=document.documentElement.getAttribute("data-theme")==="dark"?"light":"dark"; applyTheme(n); });
+
+    document.querySelectorAll(".nav-btn").forEach(b=>b.addEventListener("click",()=>switchView(b.dataset.view)));
+    document.getElementById("random-entry-btn").addEventListener("click",pickRandomEntry);
+    [searchQueryEl,searchFromEl,searchToEl,searchEmotionEl].forEach(el=>{el.addEventListener("input",renderSearchResults);el.addEventListener("change",renderSearchResults);});
+
+    summaryRangeEl.addEventListener("change",()=>{ const c=summaryRangeEl.value==="custom"; summaryFromEl.disabled=!c; summaryToEl.disabled=!c; renderSummary(); });
+    [summaryFromEl,summaryToEl].forEach(el=>el.addEventListener("change",()=>{if(summaryRangeEl.value==="custom")renderSummary();}));
+    document.getElementById("summary-refresh").addEventListener("click",renderSummary);
+
+    document.getElementById("import-firebase-btn").addEventListener("click",()=>importLegacyFirebaseEntries());
+    document.getElementById("export-json-btn").addEventListener("click",()=>{
+      const blob=new Blob([JSON.stringify({entries,drafts,exportedAt:new Date().toISOString()},null,2)],{type:"application/json"});
+      const url=URL.createObjectURL(blob); const a=document.createElement("a"); a.href=url; a.download=`diary-backup-${toDateStr(new Date())}.json`; a.click(); URL.revokeObjectURL(url); toast("백업 파일을 내보냈어요");
+    });
+    document.getElementById("export-csv-btn").addEventListener("click",()=>{
+      const rows=[["date","items","emotions","intensity","createdAt","updatedAt"]];
+      entriesToArray().forEach(e=>rows.push([e.date,e.items.join(" | "),(e.emotions||[]).join(" | "),String(e.intensity||3),e.createdAt||"",e.updatedAt||""]));
+      const csv=rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(",")).join("\n");
+      const blob=new Blob([csv],{type:"text/csv;charset=utf-8"}); const url=URL.createObjectURL(blob); const a=document.createElement("a"); a.href=url; a.download=`diary-backup-${toDateStr(new Date())}.csv`; a.click(); URL.revokeObjectURL(url); toast("CSV 파일을 내보냈어요");
+    });
+    document.getElementById("import-json-btn").addEventListener("click",()=>document.getElementById("import-json-file").click());
+    document.getElementById("import-json-file").addEventListener("change",async(e)=>{
+      const [file]=e.target.files||[]; if(!file)return;
+      try {
+        const text=await file.text(); const parsed=JSON.parse(text); const imp={};
+        Object.entries(parsed.entries||{}).forEach(([date,entry])=>{ const n=migrateEntry(date,entry); if(n)imp[date]=n; });
+        entries=imp; drafts=typeof parsed.drafts==="object"&&parsed.drafts?parsed.drafts:{};
+        persistEntries(); persistDrafts(); fillForm(entries[currentDate]||null); renderAll(); toast("백업을 가져왔어요");
+      } catch { toast("백업 파일을 읽지 못했어요"); } finally { e.target.value=""; }
+    });
+    document.getElementById("clear-data-btn").addEventListener("click",()=>{
+      if(!window.confirm("저장된 기록과 임시 초안을 모두 삭제할까요?"))return;
+      entries={}; drafts={}; localStorage.removeItem(ENTRY_KEY); localStorage.removeItem(DRAFT_KEY);
+      fillForm(null); renderAll(); toast("로컬 데이터를 초기화했어요");
+    });
+    document.getElementById("modal-close-btn").addEventListener("click",closeEntryModal);
+    entryModalEl.addEventListener("click",e=>{ if(e.target===entryModalEl)closeEntryModal(); });
+    voiceModalEl.addEventListener("click",e=>{ if(e.target===voiceModalEl)closeVoiceModal(); });
+    document.getElementById("cal-prev").addEventListener("click",()=>{ calendarMonth--; if(calendarMonth<0){calendarMonth=11;calendarYear--;} renderCalendar(); });
+    document.getElementById("cal-next").addEventListener("click",()=>{ calendarMonth++; if(calendarMonth>11){calendarMonth=0;calendarYear++;} renderCalendar(); });
+
+    // ── Init ───────────────────────────────────────────────────────────────
+    setHeaderDate();
+    renderEmotionFilterOptions();
+    applyTheme(localStorage.getItem(THEME_KEY)||"dark");
+    applyVoiceOption(localStorage.getItem(VOICE_OPTION_KEY)==="1");
+    fillForm(entries[currentDate]||null);
+    summaryFromEl.disabled=true; summaryToEl.disabled=true;
+    renderAll();
+    importLegacyFirebaseEntries({silent:true});
+  </script>
+</body>
+</html>
