@@ -488,12 +488,19 @@
                 </label>
               </div>
               <div style="margin-top:12px">
-                <div class="stl">Claude API 키</div>
-                <div class="std">AI 분석 · 음성일기 변환에 사용 (Haiku 모델, 저렴)</div>
-                <div class="api-key-group">
-                  <input class="api-key-input" id="claude-api-key" type="password" placeholder="sk-ant-api03-..." />
-                  <button class="ghost-btn" id="save-api-key-btn" type="button">저장</button>
-                </div>
+                <div class="stl">AI 프록시 상태</div>
+                <div class="std">Vercel Serverless Function을 통해 Claude API 호출</div>
+                <div id="proxy-status" style="margin-top:8px;padding:10px 12px;border-radius:12px;background:var(--bg2);font-size:0.8rem;color:var(--text2)">아직 테스트하지 않음</div>
+                <button class="ghost-btn" id="test-proxy-btn" type="button" style="width:100%;margin-top:8px">연결 테스트</button>
+                <details style="margin-top:10px;font-size:0.78rem;color:var(--text3)">
+                  <summary style="cursor:pointer;font-weight:700">Vercel 배포 안내</summary>
+                  <div style="margin-top:8px;line-height:1.7">
+                    1. GitHub에 코드 푸시<br>
+                    2. <a href="https://vercel.com/new" target="_blank" style="color:var(--primary)">vercel.com/new</a> 에서 레포 import<br>
+                    3. Settings → Environment Variables → <code>ANTHROPIC_API_KEY</code> 추가<br>
+                    4. Deploy 후 Vercel URL 접속
+                  </div>
+                </details>
               </div>
             </div>
           </div>
@@ -581,7 +588,6 @@
     const DRAFT_KEY = "diary-app-drafts-v1";
     const THEME_KEY = "diary-app-theme";
     const FIREBASE_IMPORT_KEY = "diary-app-firebase-imported-v1";
-    const CLAUDE_KEY_STORAGE = "diary-app-claude-key";
     const VOICE_OPTION_KEY = "diary-app-voice-enabled";
 
     const FIREBASE_CONFIG = {
@@ -1006,14 +1012,12 @@
       const ls=entriesToArray()[0]?.updatedAt;
       const ld=Object.values(drafts).sort((a,b)=>(b.updatedAt||"").localeCompare(a.updatedAt||""))[0]?.updatedAt;
       const fi=localStorage.getItem(FIREBASE_IMPORT_KEY)==="done";
-      const hasKey=!!localStorage.getItem(CLAUDE_KEY_STORAGE);
       settingsStatusEl.innerHTML=`
         <div class="quote-item">저장된 기록 수: ${ec}개</div>
         <div class="quote-item">임시 초안 수: ${dc}개</div>
         <div class="quote-item">마지막 저장 기록: ${ls?formatDateTime(ls):"없음"}</div>
         <div class="quote-item">마지막 임시 초안: ${ld?formatDateTime(ld):"없음"}</div>
-        <div class="quote-item">Firebase 가져오기: ${fi?"완료":"아직 안 함"}</div>
-        <div class="quote-item">Claude API 키: ${hasKey?"등록됨":"미등록"}</div>`;
+        <div class="quote-item">Firebase 가져오기: ${fi?"완료":"아직 안 함"}</div>`;
     };
 
     // ── Firebase ───────────────────────────────────────────────────────────
@@ -1083,31 +1087,57 @@
       if(view==="settings")renderSettingsStatus();
     };
 
-    // ── AI analysis (Claude Haiku) ─────────────────────────────────────────
+    // ── AI analysis (Claude Haiku via Vercel proxy) ────────────────────────
     const callClaudeHaiku = async (userPrompt) => {
-      const apiKey = localStorage.getItem(CLAUDE_KEY_STORAGE);
-      if (!apiKey) { toast("설정에서 Claude API 키를 먼저 입력해주세요"); switchView("settings"); throw new Error("no_key"); }
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: { "Content-Type":"application/json", "x-api-key":apiKey, "anthropic-version":"2023-06-01", "anthropic-dangerous-allow-browser":"true" },
-        body: JSON.stringify({ model:"claude-haiku-4-5-20251001", max_tokens:600, messages:[{role:"user",content:userPrompt}] })
-      });
-      if (!res.ok) { const t=await res.text(); throw new Error(t); }
+      let res;
+      try {
+        res = await fetch("/api/claude", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: "claude-haiku-4-5-20251001",
+            max_tokens: 600,
+            messages: [{ role: "user", content: userPrompt }]
+          })
+        });
+      } catch(netErr) {
+        const e = new Error("네트워크 오류: 서버에 연결할 수 없어요.");
+        e.code = "network"; throw e;
+      }
+      if (!res.ok) {
+        let msg = `API 오류 (${res.status})`;
+        try { const j = await res.json(); msg = j.error?.message || msg; } catch {}
+        if (res.status === 404) msg = "프록시 함수가 배포되지 않았어요. Vercel에 배포 후 사용해주세요.";
+        if (res.status === 401) msg = "Vercel의 ANTHROPIC_API_KEY가 올바르지 않아요.";
+        if (res.status === 429) msg = "요청이 너무 많습니다. 잠시 후 다시 시도해주세요.";
+        const e = new Error(msg); e.code = "api_error"; e.status = res.status; throw e;
+      }
       const data = await res.json();
-      return data.content[0].text;
+      const text = data.content?.[0]?.text;
+      if (!text) { const e = new Error("응답이 비어있어요."); e.code = "empty"; throw e; }
+      return text;
+    };
+
+    const showAiError = (msg) => {
+      aiPanelEl.innerHTML = `
+        <div class="summary-section" style="border-color:var(--danger-soft);background:var(--danger-soft)">
+          <h4 style="color:var(--danger)">⚠️ 분석 실패</h4>
+          <div class="settings-note" style="color:var(--text2);margin-bottom:10px">${escapeHtml(msg)}</div>
+          <button class="ghost-btn" id="ai-retry-btn" type="button" style="width:100%">다시 시도</button>
+        </div>`;
+      document.getElementById("ai-retry-btn")?.addEventListener("click", analyzeWithAI);
     };
 
     const analyzeWithAI = async () => {
       const items = draftItems.map(i=>i.trim()).filter(Boolean);
       if (!items.length) { toast("먼저 일기를 작성해주세요"); return; }
-      aiPanelEl.innerHTML = `<div class="summary-section" style="display:flex;align-items:center;justify-content:center;padding:20px"><span class="spin" style="border-top-color:var(--accent);border-color:var(--accent-soft)"></span></div>`;
+      aiPanelEl.innerHTML = `<div class="summary-section" style="display:flex;align-items:center;gap:10px;padding:16px"><span class="spin" style="border-color:var(--accent-soft);border-top-color:var(--accent)"></span><span style="color:var(--text2);font-size:0.82rem">AI가 감정을 분석 중이에요...</span></div>`;
       try {
         const prompt = `다음은 오늘의 일기 내용입니다:\n${items.map((t,i)=>`${i+1}. ${t}`).join("\n")}\n선택한 감정: ${selectedEmotions.join(", ")||"없음"}\n\n이 일기를 바탕으로 아래 세 가지를 간결하게 한국어로 답해주세요:\n1. 오늘의 감정 상태 (1-2문장)\n2. 긍정적인 부분 한 가지\n3. 내일을 위한 따뜻한 조언 한 가지`;
         const text = await callClaudeHaiku(prompt);
         aiPanelEl.innerHTML = `<div class="summary-section"><h4>🤖 AI 감정 분석</h4><div class="quote-list">${text.split("\n").filter(Boolean).map(line=>`<div class="quote-item">${escapeHtml(line)}</div>`).join("")}</div></div>`;
       } catch(err) {
-        aiPanelEl.innerHTML = "";
-        if (err.message !== "no_key") toast("AI 분석 실패: " + (err.message||"알 수 없는 오류"));
+        showAiError(err.message);
       }
     };
 
@@ -1188,17 +1218,10 @@
         setSaveStatus(`음성 일기 변환 완료 (${formatKoDate(targetDate)}). 확인 후 저장해주세요.`);
         toast("음성 일기가 변환됐어요! 내용을 확인하고 저장해주세요.");
       } catch(err) {
-        if (err.message === "no_key") {
-          draftItems = [transcript]; draftImages = [];
-          renderFields(); saveDraft();
-          setSaveStatus("API 키가 없어 원문으로 입력했습니다. 직접 나눠보세요.");
-          toast("API 키 없이 원문으로 입력했어요");
-        } else {
-          setSaveStatus("변환 실패. 원문으로 입력했습니다.");
-          draftItems = [transcript]; draftImages = [];
-          renderFields(); saveDraft();
-          toast("변환 실패 — 원문으로 입력했어요");
-        }
+        draftItems = [transcript]; draftImages = [];
+        renderFields(); saveDraft();
+        setSaveStatus(`변환 실패 (${err.message}). 원문으로 입력했습니다.`);
+        toast("변환 실패 — 원문으로 입력했어요");
       }
     };
 
@@ -1216,14 +1239,35 @@
     document.getElementById("voice-cancel-btn").addEventListener("click", closeVoiceModal);
     document.getElementById("voice-done-btn").addEventListener("click", processVoiceDiary);
 
-    // ── Settings listeners ─────────────────────────────────────────────────
-    document.getElementById("save-api-key-btn").addEventListener("click", () => {
-      const key = document.getElementById("claude-api-key").value.trim();
-      if (!key) { toast("API 키를 입력해주세요"); return; }
-      localStorage.setItem(CLAUDE_KEY_STORAGE, key);
-      document.getElementById("claude-api-key").value = "";
-      toast("API 키가 저장됐어요"); renderSettingsStatus();
-    });
+    // ── Proxy connection test ──────────────────────────────────────────────
+    const proxyStatusEl = document.getElementById("proxy-status");
+    const testProxy = async () => {
+      proxyStatusEl.textContent = "확인 중...";
+      proxyStatusEl.style.color = "var(--text2)";
+      try {
+        const res = await fetch("/api/claude", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ model: "claude-haiku-4-5-20251001", max_tokens: 8, messages: [{ role: "user", content: "ping" }] })
+        });
+        if (res.ok) {
+          proxyStatusEl.textContent = "✅ 연결 정상 — AI 기능 사용 가능";
+          proxyStatusEl.style.color = "var(--accent)";
+        } else if (res.status === 404) {
+          proxyStatusEl.textContent = "⚠️ 프록시 함수 없음 (로컬 환경이거나 Vercel 미배포)";
+          proxyStatusEl.style.color = "var(--danger)";
+        } else {
+          let msg = `오류 ${res.status}`;
+          try { const j = await res.json(); msg = j.error?.message || msg; } catch {}
+          proxyStatusEl.textContent = "⚠️ " + msg;
+          proxyStatusEl.style.color = "var(--danger)";
+        }
+      } catch {
+        proxyStatusEl.textContent = "⚠️ 서버 연결 실패";
+        proxyStatusEl.style.color = "var(--danger)";
+      }
+    };
+    document.getElementById("test-proxy-btn").addEventListener("click", testProxy);
 
     // ── Core event listeners ───────────────────────────────────────────────
     dateInput.value = currentDate;
