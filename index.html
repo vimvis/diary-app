@@ -1226,7 +1226,6 @@
       const form = new FormData();
       form.append("file", blob, `audio.${ext}`);
       form.append("model_id", "scribe_v1");
-      form.append("language_code", "kor");
 
       const sizeMB = (blob.size / 1024 / 1024).toFixed(2);
       console.log(`[voice] uploading ${sizeMB}MB blob (${blob.type})`);
@@ -1266,7 +1265,7 @@
 
     const showVoiceError = (msg) => {
       voiceStatusEl.innerHTML = `⚠️ <span style="color:var(--danger)">변환 실패</span>`;
-      voiceTranscriptEl.innerHTML = `<div style="color:var(--danger);font-size:0.85rem">${escapeHtml(msg)}</div>`;
+      voiceTranscriptEl.innerHTML = `<div style="color:var(--danger);font-size:0.82rem;white-space:pre-wrap;word-break:break-word;line-height:1.6">${escapeHtml(msg)}</div>`;
       const doneBtn = document.getElementById("voice-done-btn");
       doneBtn.textContent = "닫기";
       doneBtn.disabled = false;
