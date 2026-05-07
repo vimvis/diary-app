@@ -568,14 +568,14 @@
           </button>
         </div>
         <div class="voice-status" id="voice-status">
-          <span class="rec-dot"></span> 듣고 있어요...
+          <span class="rec-dot"></span> <span id="voice-status-text">녹음 중...</span> <span id="voice-timer" style="margin-left:8px;font-variant-numeric:tabular-nums">00:00</span>
         </div>
-        <div class="voice-transcript" id="voice-transcript"><span class="voice-interim">여기에 인식된 내용이 표시됩니다...</span></div>
-        <p class="voice-hint">날짜와 오늘의 일들을 자유롭게 말씀하세요.<br>예: "오늘 5월 7일, 친구를 만났어. 커피도 마셨고 저녁엔 독서했어."</p>
+        <div class="voice-transcript" id="voice-transcript"><span class="voice-interim">날짜와 오늘의 일들을 자유롭게 말씀하세요...</span></div>
+        <p class="voice-hint">예: "오늘 5월 7일, 친구를 만났어. 커피도 마셨고 저녁엔 독서했어."</p>
         <div style="display:flex;gap:10px">
           <button class="ghost-btn" id="voice-cancel-btn" type="button" style="flex:1">취소</button>
           <button class="solid-btn" id="voice-done-btn" type="button" style="flex:2;padding:12px">
-            완료 · 일기로 변환
+            녹음 종료 · 변환
           </button>
         </div>
       </div>
@@ -1141,63 +1141,143 @@
       }
     };
 
-    // ── Voice diary ────────────────────────────────────────────────────────
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    let voiceRecognition = null;
-    let voiceFullText = "";
-    let voiceInterimText = "";
+    // ── Voice diary (MediaRecorder + ElevenLabs Scribe) ────────────────────
+    let mediaRecorder = null;
+    let mediaStream = null;
+    let recordedChunks = [];
+    let recordingStartTime = 0;
+    let recordingTimer = null;
 
-    const openVoiceModal = () => {
-      if (!SpeechRecognition) { toast("이 브라우저는 음성 인식을 지원하지 않습니다 (Chrome 권장)"); return; }
-      voiceFullText = ""; voiceInterimText = "";
-      voiceTranscriptEl.innerHTML = `<span class="voice-interim">여기에 인식된 내용이 표시됩니다...</span>`;
-      voiceStatusEl.innerHTML = `<span class="rec-dot"></span> 듣고 있어요...`;
-      voiceModalEl.classList.add("open");
-      startVoiceRecognition();
+    const voiceStatusTextEl = () => document.getElementById("voice-status-text");
+    const voiceTimerEl = () => document.getElementById("voice-timer");
+
+    const formatTimer = (sec) => {
+      const m = Math.floor(sec / 60);
+      const s = sec % 60;
+      return `${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
     };
+
+    const openVoiceModal = async () => {
+      if (!navigator.mediaDevices || !window.MediaRecorder) {
+        toast("이 브라우저는 녹음을 지원하지 않습니다");
+        return;
+      }
+      voiceTranscriptEl.innerHTML = `<span class="voice-interim">🎤 녹음 중입니다... 자유롭게 말씀하세요.</span>`;
+      voiceStatusEl.innerHTML = `<span class="rec-dot"></span> <span id="voice-status-text">녹음 중...</span> <span id="voice-timer" style="margin-left:8px;font-variant-numeric:tabular-nums">00:00</span>`;
+      document.getElementById("voice-done-btn").disabled = false;
+      document.getElementById("voice-done-btn").textContent = "녹음 종료 · 변환";
+      voiceModalEl.classList.add("open");
+
+      try {
+        mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      } catch(err) {
+        toast("마이크 권한이 필요합니다");
+        closeVoiceModal();
+        return;
+      }
+
+      // mimeType 자동 선택 (iOS Safari는 mp4, 나머지는 webm)
+      const candidates = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/mpeg"];
+      let mimeType = "";
+      for (const c of candidates) { if (MediaRecorder.isTypeSupported(c)) { mimeType = c; break; } }
+
+      recordedChunks = [];
+      mediaRecorder = new MediaRecorder(mediaStream, mimeType ? { mimeType } : {});
+      mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) recordedChunks.push(e.data); };
+      mediaRecorder.start();
+
+      recordingStartTime = Date.now();
+      recordingTimer = setInterval(() => {
+        const sec = Math.floor((Date.now() - recordingStartTime) / 1000);
+        const t = voiceTimerEl();
+        if (t) t.textContent = formatTimer(sec);
+      }, 500);
+    };
+
+    const stopRecording = () => new Promise((resolve) => {
+      if (!mediaRecorder || mediaRecorder.state === "inactive") { resolve(null); return; }
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(recordedChunks, { type: mediaRecorder.mimeType || "audio/webm" });
+        if (mediaStream) { mediaStream.getTracks().forEach(t=>t.stop()); mediaStream = null; }
+        if (recordingTimer) { clearInterval(recordingTimer); recordingTimer = null; }
+        resolve(blob);
+      };
+      mediaRecorder.stop();
+    });
 
     const closeVoiceModal = () => {
       voiceModalEl.classList.remove("open");
-      if (voiceRecognition) { voiceRecognition.stop(); voiceRecognition = null; }
+      if (mediaRecorder && mediaRecorder.state !== "inactive") mediaRecorder.stop();
+      if (mediaStream) { mediaStream.getTracks().forEach(t=>t.stop()); mediaStream = null; }
+      if (recordingTimer) { clearInterval(recordingTimer); recordingTimer = null; }
+      mediaRecorder = null;
+      recordedChunks = [];
     };
 
-    const startVoiceRecognition = () => {
-      const rec = new SpeechRecognition();
-      rec.lang = "ko-KR"; rec.continuous = true; rec.interimResults = true;
-      rec.onresult = (event) => {
-        let final = "", interim = "";
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          const t = event.results[i][0].transcript;
-          if (event.results[i].isFinal) final += t;
-          else interim += t;
-        }
-        voiceFullText += final;
-        voiceInterimText = interim;
-        voiceTranscriptEl.innerHTML = escapeHtml(voiceFullText) + (voiceInterimText ? `<span class="voice-interim"> ${escapeHtml(voiceInterimText)}</span>` : "");
-        voiceTranscriptEl.scrollTop = voiceTranscriptEl.scrollHeight;
+    const blobToBase64 = (blob) => new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const result = reader.result; // data:audio/webm;base64,XXXXX
+        const base64 = result.split(",")[1];
+        resolve(base64);
       };
-      rec.onerror = (e) => {
-        if (e.error === "no-speech") return;
-        voiceStatusEl.innerHTML = `⚠️ 오류: ${e.error}`;
-      };
-      rec.onend = () => {
-        if (voiceModalEl.classList.contains("open") && voiceRecognition) {
-          voiceRecognition = null;
-          const rec2 = new SpeechRecognition();
-          Object.assign(rec2, {lang:"ko-KR",continuous:true,interimResults:true});
-          rec2.onresult = rec.onresult; rec2.onerror = rec.onerror; rec2.onend = rec.onend;
-          try { rec2.start(); voiceRecognition = rec2; } catch(e) {}
-        }
-      };
-      rec.start();
-      voiceRecognition = rec;
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+
+    const transcribeAudio = async (blob) => {
+      const base64 = await blobToBase64(blob);
+      const res = await fetch("/api/stt", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ audio_base64: base64, mime_type: blob.type })
+      });
+      if (!res.ok) {
+        let msg = `STT 오류 (${res.status})`;
+        try { const j = await res.json(); msg = j.detail?.message || j.error?.message || j.message || msg; } catch {}
+        throw new Error(msg);
+      }
+      const data = await res.json();
+      return data.text || "";
     };
 
     const processVoiceDiary = async () => {
-      const transcript = (voiceFullText + voiceInterimText).trim();
-      if (!transcript) { toast("녹음된 내용이 없습니다"); return; }
-      closeVoiceModal();
-      setSaveStatus("🤖 AI가 일기를 분석 중입니다...");
+      const doneBtn = document.getElementById("voice-done-btn");
+      doneBtn.disabled = true;
+      doneBtn.innerHTML = '<span class="spin"></span>';
+
+      // 1) 녹음 종료
+      const blob = await stopRecording();
+      if (!blob || blob.size < 1000) {
+        toast("녹음된 내용이 너무 짧습니다");
+        closeVoiceModal();
+        return;
+      }
+
+      // 2) STT 호출
+      const tEl = voiceStatusTextEl();
+      if (tEl) tEl.textContent = "텍스트로 변환 중...";
+      voiceStatusEl.innerHTML = `<span class="spin" style="border-top-color:var(--primary);border-color:var(--primary-soft)"></span> 텍스트로 변환 중...`;
+
+      let transcript = "";
+      try {
+        transcript = (await transcribeAudio(blob)).trim();
+      } catch(err) {
+        closeVoiceModal();
+        toast("STT 실패: " + err.message);
+        return;
+      }
+
+      if (!transcript) {
+        closeVoiceModal();
+        toast("음성을 인식하지 못했습니다");
+        return;
+      }
+
+      // 3) Claude Haiku로 분리
+      voiceStatusEl.innerHTML = `<span class="spin" style="border-top-color:var(--accent);border-color:var(--accent-soft)"></span> AI가 일기를 분리 중...`;
+      voiceTranscriptEl.textContent = transcript;
+
       const today = toDateStr(new Date());
       try {
         const prompt = `다음은 음성으로 녹음된 일기 내용입니다:\n"${transcript}"\n\n오늘 날짜: ${today}\n\n이 내용에서:\n1. 날짜를 파악하세요 (언급이 없으면 오늘 날짜 사용)\n2. 내용을 의미 있는 기억 단위로 2~5개로 나누세요. 각 항목은 하나의 사건/생각/감정입니다.\n\n반드시 다음 JSON만 응답하세요 (설명 없이):\n{"date":"YYYY-MM-DD","items":["기억1","기억2","기억3"]}`;
@@ -1207,21 +1287,21 @@
         const parsed = JSON.parse(jsonMatch[0]);
         const targetDate = parsed.date || today;
         const items = Array.isArray(parsed.items) && parsed.items.length ? parsed.items : [transcript];
+
+        closeVoiceModal();
         currentDate = targetDate;
         dateInput.value = currentDate;
         draftItems = items;
         draftImages = [];
-        renderFields();
-        renderEmotionGrid();
-        saveDraft();
-        renderTodayPanels();
+        renderFields(); renderEmotionGrid(); saveDraft(); renderTodayPanels();
         setSaveStatus(`음성 일기 변환 완료 (${formatKoDate(targetDate)}). 확인 후 저장해주세요.`);
-        toast("음성 일기가 변환됐어요! 내용을 확인하고 저장해주세요.");
+        toast("음성 일기가 변환됐어요!");
       } catch(err) {
+        closeVoiceModal();
         draftItems = [transcript]; draftImages = [];
         renderFields(); saveDraft();
-        setSaveStatus(`변환 실패 (${err.message}). 원문으로 입력했습니다.`);
-        toast("변환 실패 — 원문으로 입력했어요");
+        setSaveStatus(`AI 분리 실패 (${err.message}). 원문으로 입력했습니다.`);
+        toast("AI 분리 실패 — 원문으로 입력했어요");
       }
     };
 
