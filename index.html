@@ -1357,20 +1357,26 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ model: "claude-haiku-4-5-20251001", max_tokens: 8, messages: [{ role: "user", content: "ping" }] })
         });
+        const respText = await res.text();
+        const ct = res.headers.get("content-type") || "";
+        console.log("[testProxy]", res.status, ct, respText.slice(0, 200));
         if (res.ok) {
           proxyStatusEl.textContent = "✅ 연결 정상 — AI 기능 사용 가능";
           proxyStatusEl.style.color = "var(--accent)";
         } else if (res.status === 404) {
-          proxyStatusEl.textContent = "⚠️ 프록시 함수 없음 (로컬 환경이거나 Vercel 미배포)";
+          proxyStatusEl.textContent = "⚠️ 404 — 프록시 함수 없음 (Vercel 배포 확인)";
+          proxyStatusEl.style.color = "var(--danger)";
+        } else if (res.status === 405) {
+          proxyStatusEl.textContent = "⚠️ 405 — 함수가 정적파일로 처리됨. vercel.json 설정 확인";
           proxyStatusEl.style.color = "var(--danger)";
         } else {
           let msg = `오류 ${res.status}`;
-          try { const j = await res.json(); msg = j.error?.message || msg; } catch {}
-          proxyStatusEl.textContent = "⚠️ " + msg;
+          try { const j = JSON.parse(respText); msg = j.error?.message || msg; } catch { msg += `: ${respText.slice(0,100)}`; }
+          proxyStatusEl.innerHTML = "⚠️ " + escapeHtml(msg);
           proxyStatusEl.style.color = "var(--danger)";
         }
-      } catch {
-        proxyStatusEl.textContent = "⚠️ 서버 연결 실패";
+      } catch (err) {
+        proxyStatusEl.textContent = "⚠️ 서버 연결 실패: " + (err.message || "");
         proxyStatusEl.style.color = "var(--danger)";
       }
     };
