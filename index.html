@@ -562,7 +562,7 @@
     <div class="modal-backdrop" id="voice-modal">
       <div class="modal-card" style="max-width:520px">
         <div class="modal-head">
-          <div class="modal-title">🎙️ 보이스 일기</div>
+          <div class="modal-title" id="voice-modal-title">🎙️ 보이스 일기</div>
           <button class="icon-btn" id="voice-modal-close" type="button" aria-label="닫기">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
           </button>
@@ -1162,6 +1162,8 @@
         toast("이 브라우저는 녹음을 지원하지 않습니다");
         return;
       }
+      const titleEl = document.getElementById("voice-modal-title");
+      if (titleEl) titleEl.textContent = `🎙️ 보이스 일기 · ${formatKoDate(toDateStr(new Date()))}`;
       voiceTranscriptEl.innerHTML = `<span class="voice-interim">🎤 녹음 중입니다... 자유롭게 말씀하세요.</span>`;
       voiceStatusEl.innerHTML = `<span class="rec-dot"></span> <span id="voice-status-text">녹음 중...</span> <span id="voice-timer" style="margin-left:8px;font-variant-numeric:tabular-nums">00:00</span>`;
       document.getElementById("voice-done-btn").disabled = false;
