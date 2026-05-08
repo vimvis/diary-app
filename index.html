@@ -161,9 +161,27 @@
     .slider-row input[type="range"] { width: 100%; accent-color: var(--primary); }
     .slider-badge { min-width: 52px; padding: 8px 10px; border-radius: 12px; background: var(--accent-soft); color: var(--accent); text-align: center; font-size: 0.76rem; font-weight: 800; }
     .save-btn,.solid-btn,.random-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: 14px; color: #fff; font-weight: 800; }
-    .save-btn,.solid-btn { width: 100%; padding: 14px; background: linear-gradient(135deg,var(--primary) 0%,#f6be72 100%); box-shadow: 0 10px 24px var(--primary-glow); }
+    .solid-btn { width: 100%; padding: 14px; background: linear-gradient(135deg,var(--primary) 0%,#f6be72 100%); box-shadow: 0 10px 24px var(--primary-glow); }
+    .save-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 4px; border-top: 1px solid var(--border); margin-top: 8px; padding-top: 14px; }
+    .save-row .auto-status { color: var(--text3); font-size: 0.78rem; line-height: 1.4; flex: 1; min-width: 0; }
+    .save-btn { padding: 10px 18px; background: linear-gradient(135deg,var(--primary) 0%,#f6be72 100%); box-shadow: 0 6px 14px var(--primary-glow); font-size: 0.86rem; flex-shrink: 0; }
     .save-btn:hover:not(:disabled),.solid-btn:hover { transform: translateY(-1px); }
     .save-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .save-btn svg { width: 14px; height: 14px; }
+
+    /* Emotion groups */
+    .emotion-group { margin-bottom: 10px; }
+    .emotion-group-label { color: var(--text3); font-size: 0.66rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 6px; }
+    .emotion-group .emotion-grid { margin-bottom: 0; }
+    .emotion-chip { padding: 7px 11px; font-size: 0.78rem; }
+    .ai-score-card { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 14px; background: linear-gradient(135deg,var(--accent-soft) 0%,var(--primary-soft) 100%); border: 1px solid var(--border); margin-bottom: 10px; }
+    .ai-score-num { font-size: 2rem; font-weight: 800; color: var(--accent); line-height: 1; min-width: 56px; text-align: center; }
+    .ai-score-num .denom { font-size: 0.9rem; color: var(--text3); font-weight: 600; }
+    .ai-score-info { flex: 1; min-width: 0; }
+    .ai-score-info strong { font-size: 0.86rem; font-weight: 800; display: block; margin-bottom: 4px; }
+    .ai-score-info span { font-size: 0.78rem; color: var(--text2); line-height: 1.5; }
+    .ai-applied-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+    .ai-applied-list .tag-chip { background: var(--accent-soft); color: var(--accent); font-size: 0.7rem; padding: 4px 8px; }
 
     /* Voice diary button */
     .voice-fab {
@@ -375,19 +393,21 @@
                 <input id="emotion-intensity" type="range" min="1" max="5" value="3" />
                 <div class="slider-badge" id="emotion-intensity-label">3 / 5</div>
               </div>
-              <div class="status-line" id="save-status">아직 저장되지 않았습니다.</div>
-              <button class="save-btn" id="save-btn" type="button">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
-                <span id="save-label">일기 저장하기</span>
-              </button>
-              <!-- AI 분석 버튼 -->
-              <button class="ai-analyze-btn" id="ai-analyze-btn" type="button">
+              <button class="ai-analyze-btn" id="ai-analyze-btn" type="button" style="margin-top:14px">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px">
                   <circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path>
                 </svg>
-                AI 감정 분석
+                AI 감정 자동 선택
               </button>
               <div class="ai-panel" id="ai-panel"></div>
+
+              <div class="save-row">
+                <div class="auto-status" id="save-status">아직 저장되지 않았습니다.</div>
+                <button class="save-btn" id="save-btn" type="button">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                  <span id="save-label">저장</span>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -599,7 +619,14 @@
       appId: "1:888823431115:web:e1d429ca9b7aae0e56804e"
     };
     const FIREBASE_COLLECTION = "entries";
-    const EMOTIONS = ["기쁨","감사","평온","불안","피곤","슬픔","성취감","외로움"];
+    const EMOTION_GROUPS = [
+      { name: "긍정", color: "var(--primary)", emotions: ["기쁨","감사","평온","성취감","설렘","자부심","사랑","희망"] },
+      { name: "활력", color: "var(--accent)", emotions: ["흥미","영감","열정","호기심"] },
+      { name: "부정", color: "#a34", emotions: ["슬픔","분노","좌절","불안","두려움","실망"] },
+      { name: "소진", color: "#666", emotions: ["피곤","외로움","무기력","우울"] },
+      { name: "중립", color: "#888", emotions: ["혼란","그리움"] }
+    ];
+    const EMOTIONS = EMOTION_GROUPS.flatMap(g => g.emotions);
     const STOP_WORDS = new Set(["그리고","하지만","오늘","정말","조금","너무","그냥","에서","에게","이제","다시","했다","했다는","했다가","같다","있다","했다며","위해"]);
     const FIELD_PLACEHOLDERS = ["오늘 감사했던 일은?","오늘 배운 것은?","내일 하고 싶은 일은?","기억에 남은 대화는?","오늘 가장 강했던 순간은?"];
 
@@ -838,7 +865,14 @@
     };
 
     const renderEmotionGrid = () => {
-      emotionGridEl.innerHTML = EMOTIONS.map(e => `<button class="emotion-chip ${selectedEmotions.includes(e)?"active":""}" data-emotion="${e}" type="button">${e}</button>`).join("");
+      emotionGridEl.innerHTML = EMOTION_GROUPS.map(g => `
+        <div class="emotion-group">
+          <div class="emotion-group-label">${g.name}</div>
+          <div class="emotion-grid">
+            ${g.emotions.map(e => `<button class="emotion-chip ${selectedEmotions.includes(e)?"active":""}" data-emotion="${e}" type="button">${e}</button>`).join("")}
+          </div>
+        </div>
+      `).join("");
       emotionGridEl.querySelectorAll("[data-emotion]").forEach(btn => {
         btn.addEventListener("click", () => {
           const e=btn.dataset.emotion;
@@ -1133,9 +1167,48 @@
       if (!items.length) { toast("먼저 일기를 작성해주세요"); return; }
       aiPanelEl.innerHTML = `<div class="summary-section" style="display:flex;align-items:center;gap:10px;padding:16px"><span class="spin" style="border-color:var(--accent-soft);border-top-color:var(--accent)"></span><span style="color:var(--text2);font-size:0.82rem">AI가 감정을 분석 중이에요...</span></div>`;
       try {
-        const prompt = `다음은 오늘의 일기 내용입니다:\n${items.map((t,i)=>`${i+1}. ${t}`).join("\n")}\n선택한 감정: ${selectedEmotions.join(", ")||"없음"}\n\n이 일기를 바탕으로 아래 세 가지를 간결하게 한국어로 답해주세요:\n1. 오늘의 감정 상태 (1-2문장)\n2. 긍정적인 부분 한 가지\n3. 내일을 위한 따뜻한 조언 한 가지`;
+        const prompt = `다음은 오늘의 일기 내용입니다:
+${items.map((t,i)=>`${i+1}. ${t}`).join("\n")}
+
+사용 가능한 감정 목록 (반드시 이 목록에서만 선택): ${EMOTIONS.join(", ")}
+
+위 일기를 분석하여 반드시 다음 JSON만 응답하세요 (설명·마크다운 금지):
+{
+  "emotions": ["해당 감정 1~5개를 위 목록에서만"],
+  "intensity": 1~5 사이 정수 (감정의 강렬함),
+  "score": 1~10 사이 정수 (전반적인 하루 점수, 10이 최고),
+  "summary": "30자 이내 한 줄 요약"
+}`;
         const text = await callClaudeHaiku(prompt);
-        aiPanelEl.innerHTML = `<div class="summary-section"><h4>🤖 AI 감정 분석</h4><div class="quote-list">${text.split("\n").filter(Boolean).map(line=>`<div class="quote-item">${escapeHtml(line)}</div>`).join("")}</div></div>`;
+        const m = text.match(/\{[\s\S]*\}/);
+        if (!m) throw new Error("응답 파싱 실패");
+        const parsed = JSON.parse(m[0]);
+
+        const validEmotions = (parsed.emotions || []).filter(e => EMOTIONS.includes(e));
+        selectedEmotions = validEmotions;
+        if (parsed.intensity >= 1 && parsed.intensity <= 5) {
+          emotionIntensity = parsed.intensity;
+          intensityEl.value = String(emotionIntensity);
+          syncEmotionIntensityLabel();
+        }
+        renderEmotionGrid();
+        saveDraft();
+
+        const score = Math.max(1, Math.min(10, parsed.score || 5));
+        const summary = parsed.summary || "";
+        aiPanelEl.innerHTML = `
+          <div class="ai-score-card">
+            <div class="ai-score-num">${score}<span class="denom">/10</span></div>
+            <div class="ai-score-info">
+              <strong>오늘의 점수</strong>
+              <span>${escapeHtml(summary)}</span>
+              <div class="ai-applied-list">
+                ${validEmotions.map(e=>`<span class="tag-chip">${e}</span>`).join("")}
+                ${parsed.intensity ? `<span class="tag-chip">강도 ${parsed.intensity}/5</span>` : ""}
+              </div>
+            </div>
+          </div>`;
+        toast("AI가 감정을 자동 선택했어요!");
       } catch(err) {
         showAiError(err.message);
       }
