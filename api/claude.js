@@ -1,13 +1,23 @@
 // Vercel Serverless Function: Anthropic API 프록시
 // API 키는 Vercel 환경변수 ANTHROPIC_API_KEY 에 저장
+const { rateLimit, checkPassword } = require("./_gate");
 
 module.exports = async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, x-app-password");
 
   if (req.method === "OPTIONS") return res.status(200).end();
   if (req.method !== "POST") return res.status(405).json({ error: { message: "POST만 허용됩니다" } });
+
+  if (!checkPassword(req).ok) {
+    return res.status(401).json({ error: { message: "접근 비밀번호가 올바르지 않아요." } });
+  }
+  const rl = rateLimit(req, { windowMs: 60_000, max: 20 });
+  if (!rl.ok) {
+    res.setHeader("Retry-After", String(rl.retryAfter));
+    return res.status(429).json({ error: { message: `요청이 너무 많아요. ${rl.retryAfter}초 뒤 다시 시도해주세요.` } });
+  }
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
