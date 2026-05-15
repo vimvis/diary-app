@@ -1295,13 +1295,24 @@ ${items.map((t,i)=>`${i+1}. ${t}`).join("\n")}
     };
 
     const transcribeAudio = async (blob) => {
-      const ext = (blob.type.includes("mp4") ? "mp4" : (blob.type.includes("mpeg") ? "mp3" : "webm"));
+      // iOS Safari → audio/mp4; Chrome/Android → audio/webm; 등
+      const t = (blob.type || "").toLowerCase();
+      let ext = "webm";
+      if (t.includes("mp4") || t.includes("aac") || t.includes("m4a")) ext = "m4a";
+      else if (t.includes("mpeg") || t.includes("mp3")) ext = "mp3";
+      else if (t.includes("ogg")) ext = "ogg";
+      else if (t.includes("wav")) ext = "wav";
       const form = new FormData();
       form.append("file", blob, `audio.${ext}`);
       form.append("model_id", "scribe_v1");
 
       const sizeMB = (blob.size / 1024 / 1024).toFixed(2);
-      console.log(`[voice] uploading ${sizeMB}MB blob (${blob.type})`);
+      console.log(`[voice] uploading ${sizeMB}MB blob (type=${blob.type}, ext=${ext})`);
+
+      // Vercel 함수 본문 4.5MB 제한 — 미리 차단
+      if (blob.size > 4_400_000) {
+        throw new Error(`녹음 파일이 너무 큽니다 (${sizeMB}MB). 30초 이내로 짧게 녹음해주세요.`);
+      }
 
       // 진행 시간 카운터
       const t0 = Date.now();
