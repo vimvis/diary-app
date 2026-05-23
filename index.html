@@ -1286,12 +1286,18 @@ ${items.map((t,i)=>`${i+1}. ${t}`).join("\n")}
 
     const stopRecording = () => new Promise((resolve) => {
       if (!mediaRecorder || mediaRecorder.state === "inactive") { resolve(null); return; }
-      mediaRecorder.onstop = () => {
-        const blob = new Blob(recordedChunks, { type: mediaRecorder.mimeType || "audio/webm" });
+      mediaRecorder.onstop = async () => {
+        // iOS Safari 버그 회피: stop 후 마지막 청크가 ondataavailable에 들어올 시간 확보
+        await new Promise(r => setTimeout(r, 300));
+        const type = mediaRecorder.mimeType || (recordedChunks[0] && recordedChunks[0].type) || "audio/mp4";
+        const blob = new Blob(recordedChunks, { type });
+        console.log(`[voice] stopRecording: ${recordedChunks.length} chunks, blob ${blob.size} bytes, type=${blob.type}`);
         if (mediaStream) { mediaStream.getTracks().forEach(t=>t.stop()); mediaStream = null; }
         if (recordingTimer) { clearInterval(recordingTimer); recordingTimer = null; }
         resolve(blob);
       };
+      // 마지막 청크 강제 flush (iOS Safari 핵심 버그 회피)
+      try { mediaRecorder.requestData(); } catch(e) { console.warn("[voice] requestData failed:", e); }
       mediaRecorder.stop();
     });
 
