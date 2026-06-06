@@ -1316,19 +1316,16 @@ ${items.map((t,i)=>`${i+1}. ${t}`).join("\n")}
     };
 
     const transcribeAudio = async (blob) => {
-      // iOS Safari → audio/mp4; Chrome/Android → audio/webm; 등
+      // iOS Safari multipart 직렬화 우회: raw 바이트만 전송, 서버에서 multipart 재구성
       const t = (blob.type || "").toLowerCase();
-      let ext = "webm";
-      if (t.includes("mp4") || t.includes("aac") || t.includes("m4a")) ext = "m4a";
-      else if (t.includes("mpeg") || t.includes("mp3")) ext = "mp3";
-      else if (t.includes("ogg")) ext = "ogg";
-      else if (t.includes("wav")) ext = "wav";
-      const form = new FormData();
-      form.append("file", blob, `audio.${ext}`);
-      form.append("model_id", "scribe_v1");
+      let ext = "webm", bareType = "audio/webm";
+      if (t.includes("mp4") || t.includes("aac") || t.includes("m4a")) { ext = "m4a"; bareType = "audio/mp4"; }
+      else if (t.includes("mpeg") || t.includes("mp3")) { ext = "mp3"; bareType = "audio/mpeg"; }
+      else if (t.includes("ogg")) { ext = "ogg"; bareType = "audio/ogg"; }
+      else if (t.includes("wav")) { ext = "wav"; bareType = "audio/wav"; }
 
       const sizeMB = (blob.size / 1024 / 1024).toFixed(2);
-      console.log(`[voice] uploading ${sizeMB}MB blob (type=${blob.type}, ext=${ext})`);
+      console.log(`[voice] uploading ${sizeMB}MB raw bytes (type=${blob.type}, bareType=${bareType}, ext=${ext})`);
 
       // Vercel 함수 본문 4.5MB 제한 — 미리 차단
       if (blob.size > 4_400_000) {
@@ -1342,12 +1339,21 @@ ${items.map((t,i)=>`${i+1}. ${t}`).join("\n")}
         setVoiceProgress("📤", `오디오 업로드 & 변환 중... (${sec}초)`, `${sizeMB}MB · ElevenLabs Scribe 처리 중`);
       }, 1000);
 
-      // 90초 타임아웃 (Vercel maxDuration 60초 + 네트워크 여유)
+      // 90초 타임아웃
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 90000);
 
       try {
-        const res = await fetch("/api/stt", { method: "POST", body: form, signal: controller.signal });
+        const res = await fetch("/api/stt", {
+          method: "POST",
+          headers: {
+            "content-type": "application/octet-stream",
+            "x-audio-type": bareType,
+            "x-audio-ext": ext
+          },
+          body: blob,
+          signal: controller.signal
+        });
         clearTimeout(timeoutId);
         clearInterval(ticker);
         const respText = await res.text();
