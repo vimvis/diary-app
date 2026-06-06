@@ -1,7 +1,7 @@
 // Vercel Serverless Function: ElevenLabs Scribe STT 프록시
 // 클라이언트가 raw 오디오 바이트를 octet-stream으로 보내면 여기서 multipart 재구성.
 // iOS Safari의 multipart 직렬화 (codecs 파라미터 등) 가 ElevenLabs 앞단 nginx에 거부되는 문제 회피.
-const { rateLimit, checkPassword } = require("./_gate");
+const { rateLimit } = require("./_gate");
 
 module.exports.config = {
   api: { bodyParser: false },
@@ -16,9 +16,6 @@ module.exports = async function handler(req, res) {
   if (req.method === "OPTIONS") return res.status(200).end();
   if (req.method !== "POST") return res.status(405).json({ error: { message: "POST만 허용됩니다" } });
 
-  if (!checkPassword(req).ok) {
-    return res.status(401).json({ error: { message: "접근 비밀번호가 올바르지 않아요." } });
-  }
   const rl = rateLimit(req, { windowMs: 60_000, max: 6 });
   if (!rl.ok) {
     res.setHeader("Retry-After", String(rl.retryAfter));
