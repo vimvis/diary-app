@@ -380,6 +380,30 @@
     :focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
     @media(max-width:720px) { #home-view { padding-bottom: calc(var(--nav-h) + 30px + env(safe-area-inset-bottom)); } .header-title { font-size: .75rem; } }
     @media(prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+    .date-navigation { display: flex; gap: 8px; align-items: center; }
+    .date-navigation input { min-width: 0; flex: 1; width: 100%; }
+    .utility-btn { min-height: 44px; padding: 10px 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface2); color: var(--text); font: inherit; cursor: pointer; }
+    .date-navigation .utility-btn { font-size: 1.5rem; min-width: 44px; }
+    .date-context, .editor-summary { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: var(--text2); font-size: .75rem; }
+    .date-context { margin-top: 8px; }
+    .editor-summary { margin: 4px 0 12px; flex-wrap: wrap; }
+    .text-btn { min-height: 44px; padding: 6px 8px; background: transparent; border: 0; color: var(--primary); cursor: pointer; font: inherit; }
+    .editor-hint { color: var(--text2); font-size: .72rem; line-height: 1.7; margin-top: 10px; text-align: center; }
+    .editor-hint span { display: block; }
+    .record-tools { margin-top: 16px; scroll-margin-top: 80px; }
+    .record-tools summary { font-weight: 600; cursor: pointer; min-height: 28px; }
+    .record-tools p { font-size: .75rem; line-height: 1.8; color: var(--text2); margin: 10px 0; overflow-wrap: anywhere; }
+    .record-tools .utility-btn { width: 100%; margin: 4px 0 16px; }
+    .import-label { display: block; font-size: .8rem; margin-bottom: 8px; }
+    #import-file { max-width: 100%; font: inherit; font-size: .75rem; color: var(--text2); }
+    #import-file::file-selector-button { min-height: 44px; background: var(--surface2); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; margin-right: 8px; }
+    .retry-btn { margin-top: 12px; width: 100%; }
+    [hidden] { display: none !important; }
+    @media (max-width: 720px) {
+      #home-view { padding-bottom: calc(var(--nav-h) + 110px + env(safe-area-inset-bottom)); }
+      .save-btn:disabled { opacity: 1; background: var(--surface2); color: var(--text2); }
+      .save-btn { position: fixed; left: 28px; right: 28px; bottom: calc(var(--nav-h) + 12px + env(safe-area-inset-bottom)); width: calc(100% - 56px); z-index: 45; box-shadow: 0 0 0 10px var(--bg), var(--shadow-lg); }
+    }
   </style>
 </head>
 <body>
@@ -399,7 +423,7 @@
         <div class="header-date" id="hdr-date"></div>
       </div>
     </div>
-    <button class="backup-btn" id="backup-btn" title="전체 기록과 임시 저장을 JSON 파일로 백업">백업 다운로드</button>
+    <button class="backup-btn" id="manage-btn" aria-controls="record-tools" aria-expanded="false">기록 관리</button>
     <button class="icon-btn" id="theme-btn" aria-label="화면 테마 변경" title="테마">
       <!-- sun (shown in dark mode) -->
       <svg id="ico-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -435,7 +459,12 @@
               </svg>
               날짜 선택
             </div>
-            <input type="date" class="date-input" id="date-input" aria-label="기록 날짜" />
+            <div class="date-navigation">
+              <button class="utility-btn" id="day-prev" aria-label="이전 날짜">‹</button>
+              <input type="date" class="date-input" id="date-input" aria-label="기록 날짜" />
+              <button class="utility-btn" id="day-next" aria-label="다음 날짜">›</button>
+            </div>
+            <div class="date-context"><span id="selected-date-label"></span><button class="text-btn" id="go-today">오늘로</button></div>
           </div>
 
           <!-- Memories -->
@@ -455,6 +484,7 @@
             </div>
           </div>
 
+          <div class="editor-summary"><span id="writing-progress"></span><button class="text-btn" id="discard-draft" disabled>임시 저장 취소</button></div>
           <!-- Save -->
           <button class="save-btn" id="save-btn">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -463,7 +493,18 @@
             </svg>
             <span id="save-label">일기 저장하기</span>
           </button>
+          <p class="editor-hint">한 가지 기억만 적어도 괜찮아요. <span>⌘ / Ctrl + Enter로 저장</span></p>
+          <button class="utility-btn retry-btn" id="retry-load" hidden>다시 불러오기</button>
         </div>
+        <details id="record-tools" class="card record-tools">
+          <summary>기록 관리</summary>
+          <p>저장된 일기와 이 브라우저의 초안을 파일로 보관하세요.</p>
+          <button class="utility-btn" id="backup-btn">백업 다운로드</button>
+          <label class="import-label" for="import-file">백업 파일 가져오기</label>
+          <input id="import-file" type="file" accept=".json,application/json" aria-describedby="import-help" />
+          <p id="import-help">가져온 기록은 날짜별 임시 저장으로 복원합니다. 기존 초안은 유지하며, 저장 버튼을 눌러야 일기에 반영돼요.</p>
+          <p id="import-status" role="status" aria-live="polite"></p>
+        </details>
       </div>
 
       <!-- RIGHT: Memories -->
@@ -501,7 +542,7 @@
 
   <!-- ── Bottom Nav ── -->
   <nav>
-    <button class="nav-btn active" id="nav-home" onclick="switchView('home')">
+    <button class="nav-btn active" id="nav-home" onclick="goToday()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
         <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
         <polyline points="9 22 9 12 15 12 15 22"/>
@@ -553,6 +594,7 @@ const shortKo = s => {
 const escHtml = s => s ? s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>') : '';
 
 /* ── State ── */
+let savedValues = {item1:'', item2:'', item3:''}, entryExists = false;
 let loadVersion = 0, calendarVersion = 0, loading = false, busy = false;
 let curDate = toStr(new Date());
 let calY = new Date().getFullYear(), calM = new Date().getMonth();
@@ -571,7 +613,7 @@ dateEl.value = curDate;
 dateEl.max = toStr(new Date());
 dateEl.addEventListener('change', () => {
   if (busy || !validDate(dateEl.value) || dateEl.value > toStr(new Date())) { dateEl.value = curDate; return; }
-  curDate = dateEl.value; loadMem(curDate);
+  selectDate(dateEl.value);
 });
 const fields = ['item1','item2','item3'];
 const status = document.getElementById('save-status');
@@ -586,11 +628,58 @@ function persistDraft() {
   try { localStorage.setItem(draftKey(curDate), JSON.stringify(data)); status.textContent = '이 브라우저에 임시 저장됨 · 다른 기기에는 반영되지 않아요'; }
   catch { status.textContent = '임시 저장 실패 · 일기 저장 또는 백업을 해주세요'; }
 }
-fields.forEach(k => document.getElementById(k).addEventListener('input', persistDraft));
+fields.forEach(k => document.getElementById(k).addEventListener('input', () => { persistDraft(); updateEditor(); }));
+function updateEditor() {
+  const values = fields.map(k => document.getElementById(k).value);
+  const changed = fields.some((k,i) => values[i].trim() !== savedValues[k].trim());
+  const count = values.filter(v => v.trim()).length;
+  document.getElementById('writing-progress').textContent = `${count}/3개의 기억 · ${values.reduce((n,v) => n + Array.from(v).length, 0)}자`;
+  document.getElementById('save-btn').disabled = loading || busy || !count || !changed;
+  if (!busy) document.getElementById('save-label').textContent = changed ? (entryExists ? '변경 내용 저장' : '일기 저장하기') : (entryExists ? '저장된 일기' : '일기 저장하기');
+  document.getElementById('discard-draft').disabled = loading || busy || !readDraft(curDate);
+  document.getElementById('day-prev').disabled = busy;
+  document.getElementById('day-next').disabled = busy || curDate >= toStr(new Date());
+  document.getElementById('go-today').disabled = busy || curDate === toStr(new Date());
+  document.getElementById('selected-date-label').textContent = curDate === toStr(new Date()) ? '오늘의 기억' : `${shortKo(curDate)}의 기억`;
+}
+function selectDate(date) {
+  if (busy || !validDate(date) || date > toStr(new Date())) return;
+  curDate = date; dateEl.value = date; dateEl.max = toStr(new Date());
+  loadMem(date);
+}
+function stepDay(amount) {
+  const day = new Date(`${curDate}T12:00:00`); day.setDate(day.getDate() + amount);
+  selectDate(toStr(day));
+}
+document.getElementById('day-prev').addEventListener('click', () => stepDay(-1));
+document.getElementById('day-next').addEventListener('click', () => stepDay(1));
+window.goToday = () => { switchView('home'); selectDate(toStr(new Date())); };
+document.getElementById('go-today').addEventListener('click', window.goToday);
+document.getElementById('retry-load').addEventListener('click', () => loadMem(curDate));
+document.getElementById('discard-draft').addEventListener('click', () => {
+  if (loading || busy || !confirm('이 날짜의 임시 저장을 취소하고 마지막 저장 내용으로 돌아갈까요?')) return;
+  try {
+    localStorage.removeItem(draftKey(curDate));
+    fields.forEach(k => document.getElementById(k).value = savedValues[k]);
+    status.textContent = '마지막 저장 내용으로 돌아왔어요'; updateEditor();
+  } catch { toast('임시 저장을 취소하지 못했어요'); }
+});
+window.addEventListener('keydown', e => {
+  if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && document.getElementById('home-view').style.display !== 'none') {
+    e.preventDefault(); const button = document.getElementById('save-btn'); if (!button.disabled) button.click();
+  }
+});
+const toolsPanel = document.getElementById('record-tools');
+document.getElementById('manage-btn').addEventListener('click', () => {
+  switchView('home'); toolsPanel.open = !toolsPanel.open;
+  if (toolsPanel.open) toolsPanel.scrollIntoView({block:'nearest'});
+});
+toolsPanel.addEventListener('toggle', () => document.getElementById('manage-btn').setAttribute('aria-expanded', String(toolsPanel.open)));
+
 function lockForm(value) {
   loading = value;
   fields.forEach(k => document.getElementById(k).disabled = value || busy);
-  document.getElementById('save-btn').disabled = value || busy;
+  updateEditor();
 }
 window.addEventListener('beforeunload', e => { if (busy) { e.preventDefault(); e.returnValue = ''; } });
 
@@ -665,9 +754,11 @@ function toast(msg) {
 async function loadMem(dateStr) {
   const version = ++loadVersion;
   lockForm(true);
+  document.getElementById('retry-load').hidden = true;
   const draft = readDraft(dateStr);
   fields.forEach(k => document.getElementById(k).value = draft?.[k] || '');
   status.textContent = draft ? '이 브라우저의 임시 저장을 복원했어요' : '불러오는 중…';
+  updateEditor();
   try {
   const sk = document.getElementById('sk-loader');
   const content = document.getElementById('mem-content');
@@ -677,12 +768,14 @@ async function loadMem(dateStr) {
   if (version !== loadVersion || dateStr !== curDate) return;
   sk.style.display = 'none';
 
+  savedValues = Object.fromEntries(fields.map(k => [k, typeof today?.[k] === 'string' ? today[k] : '']));
+  entryExists = Boolean(today);
   // populate form
   document.getElementById('item1').value = draft?.item1 ?? today?.item1 ?? '';
   document.getElementById('item2').value = draft?.item2 ?? today?.item2 ?? '';
   document.getElementById('item3').value = draft?.item3 ?? today?.item3 ?? '';
 
-  status.textContent = draft ? '이 브라우저의 임시 저장을 복원했어요 · 저장 버튼으로 기록을 반영하세요' : '기록을 불러왔어요';
+  status.textContent = draft ? '임시 저장을 복원했어요 · 저장 버튼으로 일기에 반영하세요' : (today ? '저장된 일기예요 · 수정하면 임시 저장됩니다' : '오늘의 작은 기억을 남겨보세요');
   let html = '';
 
   // Today card
@@ -773,7 +866,8 @@ async function loadMem(dateStr) {
   } catch {
     if (version !== loadVersion) return;
     document.getElementById('sk-loader').style.display = 'none';
-    status.textContent = '불러오지 못했어요. 날짜를 다시 선택해 재시도하세요. 임시 저장은 유지됩니다.';
+    status.textContent = '불러오지 못했어요. 임시 저장은 유지됩니다.';
+    document.getElementById('retry-load').hidden = false;
     document.getElementById('mem-content').textContent = '연결 상태를 확인해주세요.';
     // Existing server content is unknown: do not allow an accidental overwrite.
     return;
@@ -834,10 +928,8 @@ async function renderCal() {
   grid.querySelectorAll('[data-ds]').forEach(el => {
     el.addEventListener('click', () => {
       if (busy || el.dataset.ds > toStr(new Date())) return;
-      curDate = el.dataset.ds;
-      dateEl.value = curDate;
       switchView('home');
-      loadMem(curDate);
+      selectDate(el.dataset.ds);
     });
   });
   } catch { if (version === calendarVersion) { document.getElementById('cal-grid').textContent = '달력을 불러오지 못했어요. 이전·다음 달 버튼으로 다시 시도하세요.'; } }
@@ -885,6 +977,49 @@ document.getElementById('backup-btn').addEventListener('click', async () => {
     toast('백업 파일을 만들었어요');
   } catch { toast('백업 실패 · 연결 상태를 확인하고 다시 시도해주세요'); }
   finally { button.disabled = false; }
+});
+
+// Imports stay local until the user explicitly saves each date.
+function importBackup(data) {
+  if (!data || data.format !== 'today-memories' || data.version !== 1 || !Array.isArray(data.entries) || !data.drafts || typeof data.drafts !== 'object' || Array.isArray(data.drafts)) throw Error('이 앱에서 만든 백업 파일을 선택해주세요.');
+  if (data.entries.length + Object.keys(data.drafts).length > 20000) throw Error('백업 기록이 너무 많아요.');
+  const candidates = new Map();
+  function add(date, entry) {
+    if (!validDate(date) || date > toStr(new Date())) throw Error('올바르지 않은 날짜가 포함되어 있어요.');
+    if (!entry || !fields.every(k => typeof entry[k] === 'string' && entry[k].length <= 100000)) throw Error('백업의 일기 내용을 확인해주세요.');
+    candidates.set(date, Object.fromEntries(fields.map(k => [k, entry[k]])));
+  }
+  data.entries.forEach(e => add(e?.date, e));
+  Object.entries(data.drafts).forEach(([date,entry]) => add(date,entry));
+  const added = []; let skipped = 0;
+  try {
+    for (const [date, entry] of candidates) {
+      if (localStorage.getItem(draftKey(date)) !== null) { skipped++; continue; }
+      localStorage.setItem(draftKey(date), JSON.stringify(entry)); added.push(date);
+    }
+  } catch {
+    added.forEach(date => localStorage.removeItem(draftKey(date)));
+    throw Error('브라우저 저장 공간이 부족해 가져오지 못했어요.');
+  }
+  return {imported:added.length, skipped, dates:added.sort()};
+}
+document.getElementById('import-file').addEventListener('change', async e => {
+  const file = e.target.files?.[0]; if (!file) return;
+  const message = document.getElementById('import-status');
+  if (busy || loading) { message.textContent = '불러오기나 저장이 끝난 뒤 다시 선택해주세요.'; e.target.value = ''; return; }
+  try {
+    if (file.size > 10 * 1024 * 1024) throw Error('10MB 이하의 백업 파일을 선택해주세요.');
+    const data = JSON.parse(await file.text());
+    // A date change during file reading must not replace an in-progress editor.
+    if (busy || loading) throw Error('불러오기나 저장이 끝난 뒤 다시 선택해주세요.');
+    const result = importBackup(data);
+    message.textContent = `${result.imported}일의 기록을 임시 저장으로 가져왔어요. 기존 초안 ${result.skipped}일은 유지했어요.`;
+    if (result.imported) {
+      message.textContent += ` ${shortKo(result.dates[0])}부터 ${shortKo(result.dates[result.dates.length-1])}까지 날짜를 선택해 확인하세요.`;
+      await loadMem(curDate);
+    }
+  } catch (error) { message.textContent = error instanceof SyntaxError ? 'JSON 백업 파일을 읽을 수 없어요.' : error.message; }
+  finally { e.target.value = ''; }
 });
 
 /* ── Boot ── */
