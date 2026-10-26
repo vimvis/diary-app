@@ -372,6 +372,14 @@
       header { padding: 0 14px; }
       nav { padding: 0 14px; padding-bottom: env(safe-area-inset-bottom); }
     }
+    #save-status { font-size: .75rem; color: var(--text2); min-height: 2.5em; margin-bottom: 12px; line-height: 1.6; }
+    .backup-btn { margin-left: auto; margin-right: 10px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--text); cursor: pointer; font: inherit; font-size: .72rem; }
+    button.cal-day { font: inherit; border: 0; background: transparent; color: var(--text); }
+    button.cal-day.today { background: var(--primary-soft); color: var(--primary); }
+    button:disabled { opacity: .45; cursor: default; }
+    :focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
+    @media(max-width:720px) { #home-view { padding-bottom: calc(var(--nav-h) + 30px + env(safe-area-inset-bottom)); } .header-title { font-size: .75rem; } }
+    @media(prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
   </style>
 </head>
 <body>
@@ -391,7 +399,8 @@
         <div class="header-date" id="hdr-date"></div>
       </div>
     </div>
-    <button class="icon-btn" id="theme-btn" title="테마">
+    <button class="backup-btn" id="backup-btn" title="전체 기록과 임시 저장을 JSON 파일로 백업">백업 다운로드</button>
+    <button class="icon-btn" id="theme-btn" aria-label="화면 테마 변경" title="테마">
       <!-- sun (shown in dark mode) -->
       <svg id="ico-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
         <circle cx="12" cy="12" r="5"/>
@@ -426,21 +435,22 @@
               </svg>
               날짜 선택
             </div>
-            <input type="date" class="date-input" id="date-input" />
+            <input type="date" class="date-input" id="date-input" aria-label="기록 날짜" />
           </div>
 
           <!-- Memories -->
+          <p id="save-status" role="status" aria-live="polite"></p>
           <div class="fields">
             <div>
-              <div class="field-label"><span class="field-num">1</span> 첫 번째 기억</div>
+              <label for="item1" class="field-label"><span class="field-num">1</span> 첫 번째 기억</label>
               <textarea class="mem-input" id="item1" placeholder="오늘 감사했던 일은?" rows="3"></textarea>
             </div>
             <div>
-              <div class="field-label"><span class="field-num">2</span> 두 번째 기억</div>
+              <label for="item2" class="field-label"><span class="field-num">2</span> 두 번째 기억</label>
               <textarea class="mem-input" id="item2" placeholder="오늘 배운 것은?" rows="3"></textarea>
             </div>
             <div>
-              <div class="field-label"><span class="field-num">3</span> 세 번째 기억</div>
+              <label for="item3" class="field-label"><span class="field-num">3</span> 세 번째 기억</label>
               <textarea class="mem-input" id="item3" placeholder="내일 하고 싶은 일은?" rows="3"></textarea>
             </div>
           </div>
@@ -475,11 +485,11 @@
     <div id="cal-wrapper">
       <div class="card cal-card">
         <div class="cal-nav">
-          <button class="cal-arrow" id="cal-prev">
+          <button class="cal-arrow" id="cal-prev" aria-label="이전 달">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
           </button>
           <span class="cal-month" id="cal-label"></span>
-          <button class="cal-arrow" id="cal-next">
+          <button class="cal-arrow" id="cal-next" aria-label="다음 달">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
           </button>
         </div>
@@ -509,7 +519,7 @@
   </nav>
 
   <!-- Toast -->
-  <div class="toast" id="toast"></div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 </div><!-- /app -->
 
@@ -517,7 +527,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import {
   getFirestore, doc, getDoc, setDoc, deleteDoc,
-  collection, query, orderBy, getDocs, where
+  collection, query, orderBy, getDocs, where, limit
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 /* ── Firebase ── */
@@ -543,6 +553,7 @@ const shortKo = s => {
 const escHtml = s => s ? s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>') : '';
 
 /* ── State ── */
+let loadVersion = 0, calendarVersion = 0, loading = false, busy = false;
 let curDate = toStr(new Date());
 let calY = new Date().getFullYear(), calM = new Date().getMonth();
 
@@ -558,7 +569,31 @@ let calY = new Date().getFullYear(), calM = new Date().getMonth();
 const dateEl = document.getElementById('date-input');
 dateEl.value = curDate;
 dateEl.max = toStr(new Date());
-dateEl.addEventListener('change', () => { curDate = dateEl.value; loadMem(curDate); });
+dateEl.addEventListener('change', () => {
+  if (busy || !validDate(dateEl.value) || dateEl.value > toStr(new Date())) { dateEl.value = curDate; return; }
+  curDate = dateEl.value; loadMem(curDate);
+});
+const fields = ['item1','item2','item3'];
+const status = document.getElementById('save-status');
+const draftKey = d => `diary-draft:${d}`;
+function validDate(d) { return /^\d{4}-\d{2}-\d{2}$/.test(d) && toStr(new Date(`${d}T12:00:00`)) === d; }
+function readDraft(d) {
+  try { const v = JSON.parse(localStorage.getItem(draftKey(d))); return v && fields.every(k => typeof v[k] === 'string') ? v : null; }
+  catch { return null; }
+}
+function persistDraft() {
+  const data = Object.fromEntries(fields.map(k => [k, document.getElementById(k).value]));
+  try { localStorage.setItem(draftKey(curDate), JSON.stringify(data)); status.textContent = '이 브라우저에 임시 저장됨 · 다른 기기에는 반영되지 않아요'; }
+  catch { status.textContent = '임시 저장 실패 · 일기 저장 또는 백업을 해주세요'; }
+}
+fields.forEach(k => document.getElementById(k).addEventListener('input', persistDraft));
+function lockForm(value) {
+  loading = value;
+  fields.forEach(k => document.getElementById(k).disabled = value || busy);
+  document.getElementById('save-btn').disabled = value || busy;
+}
+window.addEventListener('beforeunload', e => { if (busy) { e.preventDefault(); e.returnValue = ''; } });
+
 
 /* ── Theme ── */
 const html = document.documentElement;
@@ -590,17 +625,24 @@ async function saveEntry(data) {
 }
 async function delEntry(d) { await deleteDoc(doc(db, COL, d)); }
 
+let earliestYearPromise;
 async function getMems(dateStr) {
   const [y,m,d] = dateStr.split('-').map(Number);
-  const q = query(collection(db, COL), orderBy('date'));
-  const snap = await getDocs(q);
-  let earliest = y;
-  snap.forEach(doc => { const yr = parseInt(doc.id); if (yr < earliest) earliest = yr; });
+  if (!earliestYearPromise) earliestYearPromise = getDocs(query(collection(db, COL), orderBy('date'), limit(1)))
+    .then(s => s.docs.length ? Number(s.docs[0].id.slice(0,4)) : y)
+    .catch(e => { earliestYearPromise = null; throw e; });
+  const earliest = await earliestYearPromise;
+  const years = Array.from({length: Math.max(0, y - earliest)}, (_, i) => y-i-1);
   const out = [];
-  for (let i = 1; i <= y - earliest; i++) {
-    const past = `${y-i}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const found = snap.docs.find(dc => dc.id === past);
-    if (found) out.push({ ago: i, date: past, entry: found.data() });
+  // Bound concurrent reads, fetching only the anniversary documents.
+  for (let offset = 0; offset < years.length; offset += 10) {
+    const batch = await Promise.all(years.slice(offset, offset+10).map(async year => {
+      const past = `${year}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      if (!validDate(past)) return null;
+      const entry = await getEntry(past);
+      return entry ? {ago:y-year, date:past, entry} : null;
+    }));
+    out.push(...batch.filter(Boolean));
   }
   return out;
 }
@@ -621,28 +663,36 @@ function toast(msg) {
 
 /* ── Load Memories ── */
 async function loadMem(dateStr) {
+  const version = ++loadVersion;
+  lockForm(true);
+  const draft = readDraft(dateStr);
+  fields.forEach(k => document.getElementById(k).value = draft?.[k] || '');
+  status.textContent = draft ? '이 브라우저의 임시 저장을 복원했어요' : '불러오는 중…';
+  try {
   const sk = document.getElementById('sk-loader');
   const content = document.getElementById('mem-content');
   sk.style.display = 'block'; content.innerHTML = '';
 
   const [today, mems] = await Promise.all([getEntry(dateStr), getMems(dateStr)]);
+  if (version !== loadVersion || dateStr !== curDate) return;
   sk.style.display = 'none';
 
   // populate form
-  document.getElementById('item1').value = today?.item1 || '';
-  document.getElementById('item2').value = today?.item2 || '';
-  document.getElementById('item3').value = today?.item3 || '';
+  document.getElementById('item1').value = draft?.item1 ?? today?.item1 ?? '';
+  document.getElementById('item2').value = draft?.item2 ?? today?.item2 ?? '';
+  document.getElementById('item3').value = draft?.item3 ?? today?.item3 ?? '';
 
+  status.textContent = draft ? '이 브라우저의 임시 저장을 복원했어요 · 저장 버튼으로 기록을 반영하세요' : '기록을 불러왔어요';
   let html = '';
 
   // Today card
   if (today) {
-    const items = [today.item1, today.item2, today.item3].filter(Boolean);
+    const items = [today.item1, today.item2, today.item3];
     html += `
       <div class="entry-card" style="animation-delay:0ms">
         <div class="entry-header">
           <div class="entry-meta">
-            <span class="badge badge-today">오늘</span>
+            <span class="badge badge-today">${dateStr === toStr(new Date()) ? '오늘' : '선택한 날'}</span>
             <span class="entry-date-str">${shortKo(dateStr)}</span>
           </div>
           <button class="del-btn" data-del="${dateStr}" title="삭제">
@@ -653,11 +703,11 @@ async function loadMem(dateStr) {
           </button>
         </div>
         <div class="entry-body">
-          ${items.map((t,i) => `
+          ${items.map((t,i) => t ? `
             <div class="entry-row">
               <span class="entry-n">${i+1}</span>
               <p class="entry-text">${escHtml(t)}</p>
-            </div>`).join('')}
+            </div>` : '').join('')}
         </div>
       </div>`;
   } else {
@@ -671,7 +721,7 @@ async function loadMem(dateStr) {
             </svg>
           </div>
           <div class="empty-title">아직 기록이 없어요</div>
-          <div class="empty-desc">오늘의 소중한 기억을<br>왼쪽에 적어보세요 ✍️</div>
+          <div class="empty-desc">오늘의 소중한 기억을<br>입력란에 적어보세요 ✍️</div>
         </div>
       </div>`;
   }
@@ -679,7 +729,7 @@ async function loadMem(dateStr) {
   // Past memories
   if (mems.length > 0) {
     mems.forEach((mem, idx) => {
-      const items = [mem.entry.item1, mem.entry.item2, mem.entry.item3].filter(Boolean);
+      const items = [mem.entry.item1, mem.entry.item2, mem.entry.item3];
       html += `
         <div class="entry-card past-card" style="animation-delay:${(idx+1)*70}ms">
           <div class="entry-header">
@@ -689,11 +739,11 @@ async function loadMem(dateStr) {
             </div>
           </div>
           <div class="entry-body">
-            ${items.map((t,i) => `
+            ${items.map((t,i) => t ? `
               <div class="entry-row">
                 <span class="entry-n">${i+1}</span>
                 <p class="entry-text">${escHtml(t)}</p>
-              </div>`).join('')}
+              </div>` : '').join('')}
           </div>
         </div>`;
     });
@@ -713,32 +763,51 @@ async function loadMem(dateStr) {
   // Delete handlers
   content.querySelectorAll('[data-del]').forEach(btn => {
     btn.addEventListener('click', async () => {
-      if (!confirm('이 일기를 삭제하시겠습니까?')) return;
-      try { await delEntry(btn.dataset.del); toast('삭제되었어요'); loadMem(curDate); }
+      if (busy || !confirm('이 일기를 삭제하시겠습니까? 삭제 전 백업을 권장해요.')) return;
+      busy = true; lockForm(true); dateEl.disabled = true;
+      try { await delEntry(btn.dataset.del); localStorage.removeItem(draftKey(btn.dataset.del)); earliestYearPromise = null; toast('삭제되었어요'); }
       catch { toast('삭제 중 오류가 발생했어요'); }
+      finally { busy = false; dateEl.disabled = false; loadMem(curDate); }
     });
   });
+  } catch {
+    if (version !== loadVersion) return;
+    document.getElementById('sk-loader').style.display = 'none';
+    status.textContent = '불러오지 못했어요. 날짜를 다시 선택해 재시도하세요. 임시 저장은 유지됩니다.';
+    document.getElementById('mem-content').textContent = '연결 상태를 확인해주세요.';
+    // Existing server content is unknown: do not allow an accidental overwrite.
+    return;
+  } finally {
+    if (version === loadVersion && document.getElementById('sk-loader').style.display === 'none' && status.textContent.indexOf('불러오지 못') !== 0) lockForm(false);
+  }
 }
 
 /* ── Save ── */
 document.getElementById('save-btn').addEventListener('click', async () => {
+  if (loading || busy) return;
+  const saveDate = curDate;
   const [i1, i2, i3] = ['item1','item2','item3'].map(id => document.getElementById(id).value.trim());
   if (!i1 && !i2 && !i3) { toast('최소 하나의 기억을 입력해주세요'); return; }
   const btn = document.getElementById('save-btn');
   const lbl = document.getElementById('save-label');
+  busy = true; lockForm(true); dateEl.disabled = true;
   btn.disabled = true; lbl.innerHTML = '<span class="spin"></span>';
   try {
-    await saveEntry({ date: curDate, item1: i1, item2: i2, item3: i3 });
+    await saveEntry({ date: saveDate, item1: i1, item2: i2, item3: i3 });
+    localStorage.removeItem(draftKey(saveDate));
+    earliestYearPromise = null;
     toast('일기가 저장되었어요 ✓');
-    loadMem(curDate);
   } catch { toast('저장 중 오류가 발생했어요'); }
-  finally { btn.disabled = false; lbl.textContent = '일기 저장하기'; }
+  finally { busy = false; dateEl.disabled = false; lbl.textContent = '일기 저장하기'; await loadMem(saveDate); }
 });
 
 /* ── Calendar ── */
 async function renderCal() {
+  const version = ++calendarVersion, year = calY, month = calM;
+  try {
   document.getElementById('cal-label').textContent = `${calY}년 ${calM+1}월`;
-  const entryDays = await getMonthDays(calY, calM);
+  const entryDays = await getMonthDays(year, month);
+  if (version !== calendarVersion) return;
   const todayStr  = toStr(new Date());
   const firstDay  = new Date(calY, calM, 1).getDay();
   const totalDays = new Date(calY, calM+1, 0).getDate();
@@ -753,7 +822,7 @@ async function renderCal() {
   for (let d = 1; d <= totalDays; d++) {
     const ds = `${calY}-${String(calM+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const cls = ['cal-day', ds===todayStr?'today':'', entryDays.has(d)?'has-entry':''].filter(Boolean).join(' ');
-    out += `<div class="${cls}" data-ds="${ds}">${d}</div>`;
+    out += `<button type="button" class="${cls}" data-ds="${ds}" aria-label="${shortKo(ds)}${entryDays.has(d) ? ' 기록 있음' : ''}" ${ds > todayStr ? 'disabled' : ''}>${d}</button>`;
   }
 
   const total = firstDay + totalDays;
@@ -764,12 +833,14 @@ async function renderCal() {
   grid.innerHTML = out;
   grid.querySelectorAll('[data-ds]').forEach(el => {
     el.addEventListener('click', () => {
+      if (busy || el.dataset.ds > toStr(new Date())) return;
       curDate = el.dataset.ds;
       dateEl.value = curDate;
       switchView('home');
       loadMem(curDate);
     });
   });
+  } catch { if (version === calendarVersion) { document.getElementById('cal-grid').textContent = '달력을 불러오지 못했어요. 이전·다음 달 버튼으로 다시 시도하세요.'; } }
 }
 
 document.getElementById('cal-prev').addEventListener('click', () => {
@@ -794,6 +865,27 @@ window.switchView = (v) => {
     renderCal();
   }
 };
+
+/* Backup includes server entries and this browser's unsaved drafts. */
+document.getElementById('backup-btn').addEventListener('click', async () => {
+  const button = document.getElementById('backup-btn');
+  button.disabled = true;
+  try {
+    const snap = await getDocs(query(collection(db, COL), orderBy('date')));
+    const entries = snap.docs.map(d => ({...d.data(), date:d.id}));
+    const drafts = {};
+    for (let i=0; i<localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key?.startsWith('diary-draft:')) { const date = key.slice(12); const value = readDraft(date); if (value) drafts[date] = value; }
+    }
+    const blob = new Blob([JSON.stringify({format:'today-memories',version:1,exportedAt:new Date().toISOString(),entries,drafts},null,2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = `memories-${toStr(new Date())}.json`; a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    toast('백업 파일을 만들었어요');
+  } catch { toast('백업 실패 · 연결 상태를 확인하고 다시 시도해주세요'); }
+  finally { button.disabled = false; }
+});
 
 /* ── Boot ── */
 loadMem(curDate);
